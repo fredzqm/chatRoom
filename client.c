@@ -1,7 +1,6 @@
 /**
  * Lab09 Solution File - simple client for echo server
- * @author <your name here>
- * @author <your name here>
+ * @author Fred Zhang
  */
 #include "client.h"
 
@@ -30,7 +29,8 @@ int main(int argc, char *argv[]) {
 
     char input_string[MAX_STRING_LEN];
     while (running) { /* run until user enters "." to quit. */
-        readMessage(input_string);
+        readMessage(input_string, MAX_STRING_LEN);
+        if (input_string)
         sendMessage(sock, input_string);
     }
 

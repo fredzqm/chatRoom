@@ -13,7 +13,6 @@
 #include "io.h"
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
-#define MAX_STRING_LEN 100 /* Maximum length of string to echo */
 
 typedef struct {
     int index;

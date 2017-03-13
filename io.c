@@ -12,9 +12,9 @@ void printPrompt() {
     fflush(stdout);
 }
 
-void readMessage(char* buffer) {
+void readMessage(char* buffer, int maxSize) {
     printPrompt();
-    fgets(buffer, MAX_STRING_LEN, stdin);
+    fgets(buffer, maxSize, stdin);
     buffer[strlen(buffer)-1] = 0;
 }
 
@@ -38,8 +38,8 @@ int recieveMessage(int sock, char* buffer) {
 }
 
 void die_with_error(char* error_message) {
-  perror(error_message);
-  exit(1);
+    perror(error_message);
+    exit(1);
 }
 
 

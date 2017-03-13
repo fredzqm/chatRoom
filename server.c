@@ -127,7 +127,7 @@ void *server_func(void *data_struct)
 
     while(1){
         char input_string[MAX_STRING_LEN];
-        readMessage(input_string);
+        readMessage(input_string, MAX_STRING_LEN);
         if (recievedDataFrom(index, input_string))
             break;
     }

@@ -2,9 +2,9 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#define MAX_STRING_LEN 100 /* Maximum length of string to echo */
+#define MAX_STRING_LEN 1024 /* Maximum length of string to echo */
 
-void readMessage(char* buffer);
+void readMessage(char* buffer, int maxSize);
 void requestName(char* buffer);
 void printRecievedMessage(char* message);
 
