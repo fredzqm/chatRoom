@@ -3,7 +3,8 @@
 
 void requestName(char* buffer) {
     printf("Provide user name: ");
-    fgets(buffer, MAX_STRING_LEN, stdin);
+    if (fgets(buffer, MAX_STRING_LEN, stdin) == NULL)
+        die_with_error("Fail to get name");
     buffer[strlen(buffer)-1] = 0;
 }
 
@@ -12,10 +13,13 @@ void printPrompt() {
     fflush(stdout);
 }
 
-void readMessage(char* buffer, int maxSize) {
+int readMessage(char* buffer, int maxSize) {
     printPrompt();
-    fgets(buffer, maxSize, stdin);
-    buffer[strlen(buffer)-1] = 0;
+    if (fgets(buffer, maxSize, stdin) == NULL)
+        die_with_error("Fail to get message or command");
+    int size = strlen(buffer)-1;
+    buffer[size] = 0;
+    return size;
 }
 
 void printRecievedMessage(char* message) {
@@ -24,17 +28,15 @@ void printRecievedMessage(char* message) {
     printPrompt();
 }
 
-void sendMessage(int socket, char* message) {
-    if (send(socket , message , strlen(message) , 0) < 0)
-        die_with_error("send failed");
+int sendMessage(int socket, char* message, int size) {
+    return send(socket , message , size , 0);
 }
 
 int recieveMessage(int sock, char* buffer) {    
     int numByte = recv(sock , buffer , MAX_STRING_LEN , 0);
-    if (numByte <= 0)
-        return -1;
-    buffer[numByte] = 0;
-    return 0;
+    if (numByte >= 0)
+        buffer[numByte] = 0;
+    return numByte;
 }
 
 void die_with_error(char* error_message) {

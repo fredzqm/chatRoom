@@ -2,8 +2,28 @@
  * Lab09 Solution File - simple client for echo server
  * @author Fred Zhang
  */
-#include "client.h"
+#include <arpa/inet.h>
+#include <pthread.h>
+#include <dirent.h>
+#include <errno.h>
+#include <netdb.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include "io.h"
 #include "fileReader.h"
+
+void parseArgs(int argc, char** argv, char** hostName, int* port);
+int connectSocket(char* serv_name, int serv_port, char* ip);
+
+void usage();
+
+void *dataReciever(void* arg);
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 #define DEFAULT_SERVE_NAME "localhost"
@@ -22,7 +42,8 @@ int main(int argc, char *argv[]) {
     printf("Connection established with %s\n", ip);
 
     requestName(name);
-    sendMessage(sock, name);
+    if (sendMessage(sock, name, strlen(name)) < 0)
+        die_with_error("error sending name");
 
     pthread_t pid;
     if (pthread_create(&pid, NULL, dataReciever, &sock))
@@ -30,8 +51,9 @@ int main(int argc, char *argv[]) {
 
     char input_string[MAX_STRING_LEN];
     while (running) { /* run until user enters "." to quit. */
-        readMessage(input_string, MAX_STRING_LEN);
-        sendMessage(sock, input_string);
+        int numbytes = readMessage(input_string, MAX_STRING_LEN);
+        if (sendMessage(sock, input_string, numbytes) < 0)
+            break;
     }
 
     if (pthread_join(pid, NULL))
@@ -46,7 +68,8 @@ void *dataReciever(void* arg) {
     int sock = *((int*)arg);
     char received_string[MAX_STRING_LEN];
     while(1){
-        if (recieveMessage(sock, received_string))
+        int numBytes = recieveMessage(sock, received_string);
+        if (numBytes < 0)
             break;
         printRecievedMessage(received_string);
     }

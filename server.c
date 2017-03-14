@@ -1,9 +1,40 @@
 /**
  * @author zhangq2
  */
- 
-#include "server.h"
+#include <arpa/inet.h>
+#include <dirent.h>
+#include <errno.h>
+#include <netdb.h>
+#include <signal.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <pthread.h>
+
+#include "io.h"
 #include "fileReader.h"
+
+#define DEFAULTPORT 5555   /* Default port for socket connection */
+
+typedef struct {
+    int index;
+    pthread_t tid;
+    int cid;
+    char name[MAX_STRING_LEN];
+} thread_data;
+
+void parseArgs(int argc, char** argv, int* port);
+int initializeSocket(int serv_port);
+
+void usage();
+
+int recievedDataFrom(int from, char* message, int size);
+
+void *thread_func(void *arg);
+void *server_func(void *arg);
+
 
 thread_data* ls;
 int len, cap;
@@ -64,21 +95,23 @@ int main(int argc, char** argv)
     close(sock);
 }
 
-void broadcast(int from, char* sent) {
+void broadcast(int from, char* data, int size) {
     int i;
     for (i = 1; i < len; i++) {
         if (from != i && ls[i].cid != 0) {
-            sendMessage(ls[i].cid, sent);
+            if (sendMessage(ls[i].cid, data, size) < 0) {
+                ls[i].cid = 0;
+            }
         }
     }
     if (from != 0) {
-        printRecievedMessage(sent);
+        printRecievedMessage(data);
     }
 }
 
-int recievedDataFrom(int from, char* message) {
+int recievedDataFrom(int from, char* data, int size) {
     char sent[MAX_STRING_LEN];
-    int isExit = strcmp("exit", message) == 0;
+    int isExit = strcmp("exit", data) == 0;
     if (isExit) {
         if (from == 0) {
             sprintf(sent, "<%s>(The server) closed the chat...", ls[from].name);
@@ -88,9 +121,9 @@ int recievedDataFrom(int from, char* message) {
             ls[from].cid = 0;
         }
     } else {
-        sprintf(sent, "<%s> : %s", ls[from].name, message);
+        sprintf(sent, "<%s> : %s", ls[from].name, data);
     }
-    broadcast(from, sent);
+    broadcast(from, sent, strlen(sent));
     return isExit;
 }
 
@@ -100,17 +133,18 @@ void *thread_func(void *data_struct)
     int index = data->index;
     int cid = data->cid;
 
-    if (recieveMessage(cid, data->name))
-        die_with_error("Recieve name not sucessful");
+    if (recieveMessage(cid, data->name) < 0)
+        die_with_error("failed to recieve name");
     
     char buffer[MAX_STRING_LEN];
     sprintf(buffer, "<%s> is entering the chat", data->name);
-    broadcast(index, buffer);
+    broadcast(index, buffer, strlen(buffer));
 
     while(1){
-        if (recieveMessage(cid, buffer) < 0)
+        int numbytes = recieveMessage(cid, buffer);
+        if (numbytes <= 0)
             break;
-        if (recievedDataFrom(index, buffer))
+        if (recievedDataFrom(index, buffer, numbytes))
             break;
     }
     close(cid);
@@ -128,8 +162,8 @@ void *server_func(void *data_struct)
 
     while(1){
         char input_string[MAX_STRING_LEN];
-        readMessage(input_string, MAX_STRING_LEN);
-        if (recievedDataFrom(index, input_string))
+        int numbytes = readMessage(input_string, MAX_STRING_LEN);
+        if (recievedDataFrom(index, input_string, numbytes))
             break;
     }
     exit(0);
