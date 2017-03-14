@@ -43,3 +43,5 @@ lab1_socketchat/client
 *.zip
 
 *Icon*
+server
+client
