@@ -164,7 +164,6 @@ void *thread_func(void *data_struct)
 void *server_func(void *data_struct)
 {
     thread_data* data = (thread_data*) data_struct;
-    int index = data->index;
 
     requestName(data->name);
     strcpy(name, data->name);
@@ -174,7 +173,7 @@ void *server_func(void *data_struct)
         int numbytes = readMessage(input_string, MAX_STRING_LEN);
         if (numbytes < 0)
             break;
-        if (recievedDataFrom(index, input_string, numbytes))
+        if (recievedDataFrom(0, input_string, numbytes))
             break;
     }
     exit(0);
