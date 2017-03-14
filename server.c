@@ -27,10 +27,12 @@ typedef struct {
 
 void parseArgs(int argc, char** argv, int* port);
 int initializeSocket(int serv_port);
-
 void usage();
 
 int recievedDataFrom(int from, char* message, int size);
+
+void broadcast(int from, char* data, int size);
+void closeConnection(int from);
 
 void *thread_func(void *arg);
 void *server_func(void *arg);
@@ -95,12 +97,25 @@ int main(int argc, char** argv)
     close(sock);
 }
 
+void closeConnection(int from) {
+    thread_data* thread = ls + from;
+    char message[MAX_STRING_LEN];
+    if (from == 0) {
+        sprintf(message, "<%s>(The server) closed the chat...", thread->name);
+    } else {
+        close(thread->cid);
+        thread->cid = 0;
+        sprintf(message, "<%s> exits the chat...", thread->name);
+    }
+    broadcast(from, message, strlen(message));
+}
+
 void broadcast(int from, char* data, int size) {
     int i;
     for (i = 1; i < len; i++) {
         if (from != i && ls[i].cid != 0) {
             if (sendMessage(ls[i].cid, data, size) < 0) {
-                ls[i].cid = 0;
+                closeConnection(i);
             }
         }
     }
@@ -109,25 +124,15 @@ void broadcast(int from, char* data, int size) {
     }
 }
 
-int isExiting(char* data) {
-    return strcmp("exit", data) == 0;
-}
-
 int recievedDataFrom(int from, char* data, int size) {
     char sent[MAX_STRING_LEN];
-    int isExit = isExiting(data);
+    int isExit = strcmp("exit", data) == 0;
     if (isExit) {
-        if (from == 0) {
-            sprintf(sent, "<%s>(The server) closed the chat...", ls[from].name);
-        } else {
-            sprintf(sent, "<%s> exits the chat...", ls[from].name);
-            close(ls[from].cid);
-            ls[from].cid = 0;
-        }
+        closeConnection(from);
     } else {
         sprintf(sent, "<%s> : %s", ls[from].name, data);
+        broadcast(from, sent, strlen(sent));
     }
-    broadcast(from, sent, strlen(sent));
     return isExit;
 }
 
@@ -167,11 +172,12 @@ void *server_func(void *data_struct)
     while(1){
         char input_string[MAX_STRING_LEN];
         int numbytes = readMessage(input_string, MAX_STRING_LEN);
+        if (numbytes < 0)
+            break;
         if (recievedDataFrom(index, input_string, numbytes))
             break;
     }
     exit(0);
-    // pthread_exit(NULL);
 }
 
 /*
