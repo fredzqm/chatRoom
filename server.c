@@ -3,6 +3,7 @@
  */
  
 #include "server.h"
+#include "fileReader.h"
 
 thread_data* ls;
 int len, cap;

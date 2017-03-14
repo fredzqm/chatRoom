@@ -3,6 +3,7 @@
  * @author Fred Zhang
  */
 #include "client.h"
+#include "fileReader.h"
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 #define DEFAULT_SERVE_NAME "localhost"
@@ -30,7 +31,6 @@ int main(int argc, char *argv[]) {
     char input_string[MAX_STRING_LEN];
     while (running) { /* run until user enters "." to quit. */
         readMessage(input_string, MAX_STRING_LEN);
-        if (input_string)
         sendMessage(sock, input_string);
     }
 
