@@ -109,9 +109,13 @@ void broadcast(int from, char* data, int size) {
     }
 }
 
+int isExiting(char* data) {
+    return strcmp("exit", data) == 0;
+}
+
 int recievedDataFrom(int from, char* data, int size) {
     char sent[MAX_STRING_LEN];
-    int isExit = strcmp("exit", data) == 0;
+    int isExit = isExiting(data);
     if (isExit) {
         if (from == 0) {
             sprintf(sent, "<%s>(The server) closed the chat...", ls[from].name);

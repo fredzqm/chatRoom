@@ -52,6 +52,8 @@ int main(int argc, char *argv[]) {
     char input_string[MAX_STRING_LEN];
     while (running) { /* run until user enters "." to quit. */
         int numbytes = readMessage(input_string, MAX_STRING_LEN);
+        if (numbytes < 0)
+            break;
         if (sendMessage(sock, input_string, numbytes) < 0)
             break;
     }
@@ -69,7 +71,7 @@ void *dataReciever(void* arg) {
     char received_string[MAX_STRING_LEN];
     while(1){
         int numBytes = recieveMessage(sock, received_string);
-        if (numBytes < 0)
+        if (numBytes <= 0)
             break;
         printRecievedMessage(received_string);
     }
