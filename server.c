@@ -22,14 +22,14 @@ typedef struct {
     int index;
     pthread_t tid;
     int cid;
+    int size;
+    void* data;
     char name[MAX_STRING_LEN];
-} thread_data;
+} Client;
 
 void parseArgs(int argc, char** argv, int* port);
 int initializeSocket(int serv_port);
 void usage();
-
-int recievedDataFrom(int from, char* message, int size);
 
 void broadcast(int from, char* data, int size);
 void closeConnection(int from);
@@ -38,7 +38,51 @@ void *thread_func(void *arg);
 void *server_func(void *arg);
 
 
-thread_data* ls;
+void onRecieveBroadcast(char* data, int size) {
+    printRecievedMessage(data);
+}
+
+int onRecieveDataFrom(Client* thread, char* data, int size) {
+    char sent[MAX_STRING_LEN];
+    int isExit = strcmp("exit", data) == 0;
+    if (isExit) {
+        closeConnection(thread->index);
+    } else {
+        sprintf(sent, "<%s> : %s", thread->name, data);
+        broadcast(thread->index, sent, strlen(sent));
+    }
+    return isExit;
+}
+
+
+void onAcceptConnection(Client* thread) {
+    if (recieveMessage(thread->cid, thread->name) < 0)
+        die_with_error("failed to recieve name");
+    
+    char buffer[MAX_STRING_LEN];
+    sprintf(buffer, "<%s> is entering the chat", thread->name);
+    broadcast(thread->index, buffer, strlen(buffer));
+
+}
+
+void onCloseConnection(Client* thread) {
+    char message[MAX_STRING_LEN];
+    if (thread->index == 0) {
+        sprintf(message, "<%s>(The server) closed the chat...", thread->name);
+    } else {
+        sprintf(message, "<%s> exits the chat...", thread->name);
+    }
+    broadcast(thread->index, message, strlen(message));
+}
+
+
+
+
+
+
+
+
+Client* ls;
 int len, cap;
 
 int main(int argc, char** argv)
@@ -48,7 +92,7 @@ int main(int argc, char** argv)
     int sock = initializeSocket(serv_port);
 
     len = 1; cap = 5;
-    ls = (thread_data*) malloc(sizeof(thread_data) * cap);
+    ls = (Client*) malloc(sizeof(Client) * cap);
     if (ls == NULL)
         die_with_error("malloc fails");
 
@@ -70,7 +114,7 @@ int main(int argc, char** argv)
 
         if (len + 1 == cap) {
             cap = cap*2;
-            ls = (thread_data*) realloc(ls, sizeof(thread_data) * cap);
+            ls = (Client*) realloc(ls, sizeof(Client) * cap);
             if (ls == NULL)
                 die_with_error("malloc fails");
         }
@@ -97,17 +141,13 @@ int main(int argc, char** argv)
     close(sock);
 }
 
+
+
 void closeConnection(int from) {
-    thread_data* thread = ls + from;
-    char message[MAX_STRING_LEN];
-    if (from == 0) {
-        sprintf(message, "<%s>(The server) closed the chat...", thread->name);
-    } else {
-        close(thread->cid);
-        thread->cid = 0;
-        sprintf(message, "<%s> exits the chat...", thread->name);
-    }
-    broadcast(from, message, strlen(message));
+    Client* thread = ls + from;
+    close(thread->cid);
+    thread->cid = 0;
+    onCloseConnection(thread);
 }
 
 void broadcast(int from, char* data, int size) {
@@ -120,50 +160,13 @@ void broadcast(int from, char* data, int size) {
         }
     }
     if (from != 0) {
-        printRecievedMessage(data);
+        onRecieveBroadcast(data, size);
     }
 }
-
-int recievedDataFrom(int from, char* data, int size) {
-    char sent[MAX_STRING_LEN];
-    int isExit = strcmp("exit", data) == 0;
-    if (isExit) {
-        closeConnection(from);
-    } else {
-        sprintf(sent, "<%s> : %s", ls[from].name, data);
-        broadcast(from, sent, strlen(sent));
-    }
-    return isExit;
-}
-
-void *thread_func(void *data_struct)
-{
-    thread_data* data = (thread_data*) data_struct;
-    int index = data->index;
-    int cid = data->cid;
-
-    if (recieveMessage(cid, data->name) < 0)
-        die_with_error("failed to recieve name");
-    
-    char buffer[MAX_STRING_LEN];
-    sprintf(buffer, "<%s> is entering the chat", data->name);
-    broadcast(index, buffer, strlen(buffer));
-
-    while(1){
-        int numbytes = recieveMessage(cid, buffer);
-        if (numbytes <= 0)
-            break;
-        if (recievedDataFrom(index, buffer, numbytes))
-            break;
-    }
-    close(cid);
-    pthread_exit(NULL);
-}
-
 
 void *server_func(void *data_struct)
 {
-    thread_data* data = (thread_data*) data_struct;
+    Client* data = (Client*) data_struct;
 
     requestName(data->name);
     strcpy(name, data->name);
@@ -173,10 +176,27 @@ void *server_func(void *data_struct)
         int numbytes = readMessage(input_string, MAX_STRING_LEN);
         if (numbytes < 0)
             break;
-        if (recievedDataFrom(0, input_string, numbytes))
+        if (onRecieveDataFrom(ls, input_string, numbytes))
             break;
     }
     exit(0);
+}
+
+void *thread_func(void *data_struct)
+{
+    Client* thread = (Client*) data_struct;
+    onAcceptConnection(thread);
+
+    char buffer[MAX_STRING_LEN];
+    while(1){
+        int numbytes = recieveMessage(thread->cid, buffer);
+        if (numbytes <= 0)
+            break;
+        if (onRecieveDataFrom(ls + thread->index, buffer, numbytes))
+            break;
+    }
+    close(thread->cid);
+    pthread_exit(NULL);
 }
 
 /*
