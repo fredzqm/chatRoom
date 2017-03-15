@@ -18,12 +18,9 @@
 #include "io.h"
 #include "fileReader.h"
 
-void parseArgs(int argc, char** argv, char** hostName, int* port);
+
 int connectSocket(char* serv_name, int serv_port, char* ip);
-
-void usage();
-
-void *dataReciever(void* arg);
+void *dataReciever(void*);
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 #define DEFAULT_SERVE_NAME "localhost"
@@ -35,6 +32,10 @@ void onRecieveBroadcast(char* data, int size) {
 }
 
 void onConnectionEstablished(int sock) {
+    requestName(name);
+    if (sendMessage(sock, name, strlen(name)) < 0)
+        die_with_error("error sending name");
+
     char input_string[MAX_STRING_LEN];
     while (1) { /* run until user enters "." to quit. */
         int numbytes = readMessage(input_string, MAX_STRING_LEN);
@@ -45,21 +46,7 @@ void onConnectionEstablished(int sock) {
     }
 }
 
-
-int main(int argc, char *argv[]) {
-    int serv_port = DEFAULTPORT;                           /* Server port */
-    char* serv_name = DEFAULT_SERVE_NAME;                  /* Server host name */
-    char ip[IP_LENGTH];
-    
-    /* Parse command line arguments */
-    parseArgs(argc, argv, &serv_name, &serv_port);
-    int sock = connectSocket(serv_name, serv_port, ip);
-    printf("Connection established with %s\n", ip);
-
-    requestName(name);
-    if (sendMessage(sock, name, strlen(name)) < 0)
-        die_with_error("error sending name");
-
+void startClient(int sock) {
     pthread_t pid;
     if (pthread_create(&pid, NULL, dataReciever, &sock))
         die_with_error("Thread not created");
@@ -75,7 +62,24 @@ int main(int argc, char *argv[]) {
     
     if (pthread_join(pid, NULL))
         die_with_error("pthread_join() failed\n");
+}
 
+
+
+void usage();
+void parseArgs(int argc, char** argv, char** hostName, int* port);
+
+int main(int argc, char *argv[]) {
+    int serv_port = DEFAULTPORT;                           /* Server port */
+    char* serv_name = DEFAULT_SERVE_NAME;                  /* Server host name */
+    char ip[IP_LENGTH];
+    
+    /* Parse command line arguments */
+    parseArgs(argc, argv, &serv_name, &serv_port);
+    int sock = connectSocket(serv_name, serv_port, ip);
+    printf("Connection established with %s\n", ip);
+
+    startClient(sock);
 }
 
 void *dataReciever(void* arg) {

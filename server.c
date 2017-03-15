@@ -95,16 +95,10 @@ void *server_func(void *data_struct)
 }
 
 
-
 Client* ls;
 int len, cap;
 
-int main(int argc, char** argv)
-{
-    int serv_port = DEFAULTPORT;
-    parseArgs(argc, argv, &serv_port);  /* Server port */
-    int sock = initializeSocket(serv_port);
-
+void startServer(int sock) {
     len = 1; cap = 5;
     ls = (Client*) malloc(sizeof(Client) * cap);
     if (ls == NULL)
@@ -153,6 +147,16 @@ int main(int argc, char** argv)
     fprintf(stdout, "closing server");
     free(ls);
     close(sock);
+}
+
+
+int main(int argc, char** argv)
+{
+    int serv_port = DEFAULTPORT;
+    parseArgs(argc, argv, &serv_port);  /* Server port */
+    int sock = initializeSocket(serv_port);
+
+    startServer(sock);
 }
 
 
