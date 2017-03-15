@@ -15,17 +15,12 @@
 
 #include "broadCastServer.h"
 #include "socketFactory.h"
-#include "fileReader.h"
 #include "app.h"
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 
 static void parseArgs(int argc, char** argv, int* port);
 static void usage();
-
-void _onRecieveBroadcast(char* data, int size) {
-    printRecievedMessage(data);
-}
 
 void _onStart(void* data_struct, int (*sendData)(char*, int)) {
     char* _name = (char*) data_struct;
@@ -34,11 +29,11 @@ void _onStart(void* data_struct, int (*sendData)(char*, int)) {
     strcpy(_name, name);
 
     while(1){
-        char input_string[MAX_STRING_LEN];
-        int numbytes = readMessage(input_string, MAX_STRING_LEN);
+        char buffer[MAX_STRING_LEN];
+        int numbytes = readMessage(buffer, MAX_STRING_LEN);
         if (numbytes < 0)
             break;
-        if (sendData(input_string, numbytes))
+        if (processAndSend(buffer, numbytes, sendData) < 0)
             break;
     }
     exit(0);

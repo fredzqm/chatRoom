@@ -14,24 +14,21 @@
 static void usage();
 static void parseArgs(int argc, char** argv, char** hostName, int* port);
 
-void _onRecieveBroadcast(char* data, int size) {
-    printRecievedMessage(data);
-}
-
 void _onStart(void* data_struct, int (*sendData)(char*, int)) {
     // char* name = (char*) data_struct;
     requestName(name);
     if (sendData(name, strlen(name)) < 0)
         perror("error sending name");
 
-    char input_string[MAX_STRING_LEN];
+    char buffer[MAX_STRING_LEN];
     while (1) { /* run until user enters "." to quit. */
-        int numbytes = readMessage(input_string, MAX_STRING_LEN);
+        int numbytes = readMessage(buffer, MAX_STRING_LEN);
         if (numbytes < 0)
             break;
-        if (sendData(input_string, numbytes) < 0)
+        if (processAndSend(buffer, numbytes, sendData) < 0)
             break;
     }
+    perror("bad bad client");
 }
 
 
