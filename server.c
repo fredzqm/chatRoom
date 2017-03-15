@@ -16,6 +16,7 @@
 #include "broadCastServer.h"
 #include "socketFactory.h"
 #include "fileReader.h"
+#include "app.h"
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 
@@ -27,10 +28,10 @@ void _onRecieveBroadcast(char* data, int size) {
 }
 
 void _onStart(void* data_struct, int (*sendData)(char*, int)) {
-    Client* thread = (Client*) data_struct;
+    char* _name = (char*) data_struct;
 
-    requestName(thread->name);
-    strcpy(name, thread->name);
+    requestName(name);
+    strcpy(_name, name);
 
     while(1){
         char input_string[MAX_STRING_LEN];
@@ -43,44 +44,6 @@ void _onStart(void* data_struct, int (*sendData)(char*, int)) {
     exit(0);
 }
 
-// void* _server_func(void *data_struct)
-// {
-//     Client* thread = (Client*) data_struct;
-
-//     requestName(thread->name);
-//     strcpy(name, thread->name);
-
-//     while(1){
-//         char buffer[MAX_STRING_LEN];
-//         int numbytes = readMessage(buffer, MAX_STRING_LEN);
-//         if (numbytes < 0)
-//             break;
-//         FileInfo info;
-//         if (parseLoadFileName(&info, buffer)) {
-//             // send file name
-//             buffer[0] = 0;
-//             buffer[1] = 1;
-//             strcpy(buffer+2, info.name);
-//             if (onRecieveDataFrom(thread, buffer, strlne(info.name) + 2))
-//                 break;
-//             // send file data
-//             while (1) {
-//                 int numbytes = readFile(&info, buffer+2, MAX_STRING_LEN-2);
-//                 if (numbytes <= 0)
-//                     break;
-//                 onRecieveDataFrom(thread, buffer, numbytes+2);
-//             }
-//             // signal the end of file transfer
-//             buffer[0] = 0;
-//             buffer[1] = 1;
-//             onRecieveDataFrom(thread, buffer,);
-//         } else {
-//             if (onRecieveDataFrom(thread, buffer, numbytes))
-//                 break;
-//         }
-//     }
-//     exit(0);
-// }
 
 int _onRecieveDataFrom(Client* thread, char* data, int size) {
     char sent[MAX_STRING_LEN];
@@ -88,30 +51,32 @@ int _onRecieveDataFrom(Client* thread, char* data, int size) {
     if (isExit) {
         closeConnection(thread->index);
     } else {
-        sprintf(sent, "<%s> : %s", thread->name, data);
+        sprintf(sent, "<%s> : %s", (char*) thread->data, data);
         broadcast(thread->index, sent, strlen(sent));
     }
     return isExit;
 }
 
 void _onAcceptConnection(Client* thread) {
-    if (recieveMessage(thread->cid, thread->name) < 0)
-        die_with_error("failed to recieve name");
-    
     char buffer[MAX_STRING_LEN];
-    sprintf(buffer, "<%s> is entering the chat", thread->name);
-    broadcast(thread->index, buffer, strlen(buffer));
+    if (recv(thread->cid, buffer, MAX_STRING_LEN, 0) < 0)
+        perror("failed to recieve name");
+    thread->data = malloc(sizeof(char) * (strlen(buffer) + 1));
+    strcpy((char*)thread->data, buffer);
 
+    sprintf(buffer, "<%s> is entering the chat", (char*) thread->data);
+    broadcast(thread->index, buffer, strlen(buffer));
 }
 
-void _onCloseConnection(Client* thread) {
+void _onCloseConnection(Client* client) {
     char message[MAX_STRING_LEN];
-    if (thread->index == 0) {
-        sprintf(message, "<%s>(The server) closed the chat...", thread->name);
+    if (client->index == 0) {
+        sprintf(message, "<%s>(The server) closed the chat...", (char*) client->data);
     } else {
-        sprintf(message, "<%s> exits the chat...", thread->name);
+        sprintf(message, "<%s> exits the chat...", (char*) client->data);
+        free(client->data);
     }
-    broadcast(thread->index, message, strlen(message));
+    broadcast(client->index, message, strlen(message));
 }
 
 

@@ -13,11 +13,11 @@ void startClient(int _sock) {
 
     pthread_t pid;
     if (pthread_create(&pid, NULL, dataReciever, NULL))
-        die_with_error("Thread not created");
+        perror("Thread not created");
 
     char received_string[MAX_STRING_LEN];
     while(1){
-        int numbytes = recieveMessage(sock, received_string);
+        int numbytes = recv(sock, received_string, MAX_STRING_LEN, 0);
         if (numbytes <= 0)
             break;
         onRecieveBroadcast(received_string, numbytes);
@@ -25,15 +25,15 @@ void startClient(int _sock) {
     close(sock);
     
     if (pthread_join(pid, NULL))
-        die_with_error("pthread_join() failed\n");
+        perror("pthread_join() failed\n");
 }
 
 int csendData(char* data, int size) {
-    return sendMessage(sock, data, size);
+    return send(sock, data, size, 0);
 }
 
 void *dataReciever(void* arg) {
+    char name[MAX_STRING_LEN];
     onStart(name, csendData);
-    pthread_exit(NULL);
 }
 

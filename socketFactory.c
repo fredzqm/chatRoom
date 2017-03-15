@@ -10,7 +10,7 @@ int initializeSocket(int serv_port) {
     /* Create a TCP socket - the welcome socket */
     int sock;                         /* Socket  */
     if( (sock = socket(AF_INET , SOCK_STREAM , 0 )) < 0){
-        die_with_error("socket error");
+        perror("socket error");
     }
   
     /* Construct local address structure */
@@ -22,10 +22,10 @@ int initializeSocket(int serv_port) {
 
     /* Bind to the local address */
     if( bind(sock , (struct sockaddr*)&serv_addr , sizeof(serv_addr)) != 0)
-        die_with_error("bind error");
+        perror("bind error");
     /* Wait for incoming requests */  
     if( listen( sock , BACK_LOG_LENGTH ) != 0 )
-        die_with_error("listen error");
+        perror("listen error");
     return sock;
 }
 
@@ -34,12 +34,12 @@ int connectSocket(char* serv_name, int serv_port) {
     /* Create a TCP socket */
     int sock;                                       /* Socket  */
     if((sock = socket(AF_INET , SOCK_STREAM , 0 ) ) < 0)
-        die_with_error("socket error");
+        perror("socket error");
 
     /* parse the host name */
     struct hostent *host;
     if ((host=gethostbyname(serv_name)) == NULL)
-        die_with_error("gethostbyname() failed");
+        perror("gethostbyname() failed");
     unsigned long s_addr = *((unsigned long *)host->h_addr_list[0]);
 
     /* Construct local address structure */
@@ -51,7 +51,7 @@ int connectSocket(char* serv_name, int serv_port) {
 
     /* Connect to server socket */
     if (connect(sock , (struct sockaddr*) &serv_addr , sizeof(serv_addr) ) != 0)
-        die_with_error("connect error");
+        perror("connect error");
     return sock;
 }
 

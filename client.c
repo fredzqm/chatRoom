@@ -5,7 +5,7 @@
 
 #include "broadCastClient.h"
 #include "socketFactory.h"
-#include "fileReader.h"
+#include "app.h"
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 #define DEFAULT_SERVE_NAME "localhost"
@@ -19,10 +19,10 @@ void _onRecieveBroadcast(char* data, int size) {
 }
 
 void _onStart(void* data_struct, int (*sendData)(char*, int)) {
-    char* name = (char*) data_struct;
+    // char* name = (char*) data_struct;
     requestName(name);
     if (sendData(name, strlen(name)) < 0)
-        die_with_error("error sending name");
+        perror("error sending name");
 
     char input_string[MAX_STRING_LEN];
     while (1) { /* run until user enters "." to quit. */
