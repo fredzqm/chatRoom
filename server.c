@@ -76,9 +76,23 @@ void onCloseConnection(Client* thread) {
 }
 
 
+void *server_func(void *data_struct)
+{
+    Client* thread = (Client*) data_struct;
 
+    requestName(thread->name);
+    strcpy(name, thread->name);
 
-
+    while(1){
+        char input_string[MAX_STRING_LEN];
+        int numbytes = readMessage(input_string, MAX_STRING_LEN);
+        if (numbytes < 0)
+            break;
+        if (onRecieveDataFrom(thread, input_string, numbytes))
+            break;
+    }
+    exit(0);
+}
 
 
 
@@ -164,23 +178,6 @@ void broadcast(int from, char* data, int size) {
     }
 }
 
-void *server_func(void *data_struct)
-{
-    Client* data = (Client*) data_struct;
-
-    requestName(data->name);
-    strcpy(name, data->name);
-
-    while(1){
-        char input_string[MAX_STRING_LEN];
-        int numbytes = readMessage(input_string, MAX_STRING_LEN);
-        if (numbytes < 0)
-            break;
-        if (onRecieveDataFrom(ls, input_string, numbytes))
-            break;
-    }
-    exit(0);
-}
 
 void *thread_func(void *data_struct)
 {
