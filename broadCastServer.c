@@ -13,87 +13,13 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include "io.h"
+#include "broadCastServer.h"
 #include "fileReader.h"
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 
-typedef struct {
-    int index;
-    pthread_t tid;
-    int cid;
-    int size;
-    void* data;
-    char name[MAX_STRING_LEN];
-} Client;
-
-void parseArgs(int argc, char** argv, int* port);
-int initializeSocket(int serv_port);
-void usage();
-
-void broadcast(int from, char* data, int size);
-void closeConnection(int from);
-
-void *thread_func(void *arg);
-void *server_func(void *arg);
-
-
-void onRecieveBroadcast(char* data, int size) {
-    printRecievedMessage(data);
-}
-
-int onRecieveDataFrom(Client* thread, char* data, int size) {
-    char sent[MAX_STRING_LEN];
-    int isExit = strcmp("exit", data) == 0;
-    if (isExit) {
-        closeConnection(thread->index);
-    } else {
-        sprintf(sent, "<%s> : %s", thread->name, data);
-        broadcast(thread->index, sent, strlen(sent));
-    }
-    return isExit;
-}
-
-
-void onAcceptConnection(Client* thread) {
-    if (recieveMessage(thread->cid, thread->name) < 0)
-        die_with_error("failed to recieve name");
-    
-    char buffer[MAX_STRING_LEN];
-    sprintf(buffer, "<%s> is entering the chat", thread->name);
-    broadcast(thread->index, buffer, strlen(buffer));
-
-}
-
-void onCloseConnection(Client* thread) {
-    char message[MAX_STRING_LEN];
-    if (thread->index == 0) {
-        sprintf(message, "<%s>(The server) closed the chat...", thread->name);
-    } else {
-        sprintf(message, "<%s> exits the chat...", thread->name);
-    }
-    broadcast(thread->index, message, strlen(message));
-}
-
-
-void *server_func(void *data_struct)
-{
-    Client* thread = (Client*) data_struct;
-
-    requestName(thread->name);
-    strcpy(name, thread->name);
-
-    while(1){
-        char input_string[MAX_STRING_LEN];
-        int numbytes = readMessage(input_string, MAX_STRING_LEN);
-        if (numbytes < 0)
-            break;
-        if (onRecieveDataFrom(thread, input_string, numbytes))
-            break;
-    }
-    exit(0);
-}
-
+static void *thread_func(void *arg);
+static void *server_func(void *arg);
 
 Client* ls;
 int len, cap;
@@ -150,16 +76,6 @@ void startServer(int sock) {
 }
 
 
-int main(int argc, char** argv)
-{
-    int serv_port = DEFAULTPORT;
-    parseArgs(argc, argv, &serv_port);  /* Server port */
-    int sock = initializeSocket(serv_port);
-
-    startServer(sock);
-}
-
-
 void closeConnection(int from) {
     Client* thread = ls + from;
     close(thread->cid);
@@ -185,6 +101,7 @@ void broadcast(int from, char* data, int size) {
 void *thread_func(void *data_struct)
 {
     Client* thread = (Client*) data_struct;
+
     onAcceptConnection(thread);
 
     char buffer[MAX_STRING_LEN];
@@ -199,25 +116,22 @@ void *thread_func(void *data_struct)
     pthread_exit(NULL);
 }
 
-/*
-    initialize serv_port based on arguments
-*/
-void parseArgs(int argc, char** argv, int* port) {
-    int optch;                        /* option flag */
-    if (argc < 1) {
-        usage();
-    }
-    while ((optch = getopt(argc, argv, "p:u")) != -1) {
-        switch (optch) {
-        case 'p':
-            *port = atoi(optarg);
-            printf("Using port %d\n", *port);
+void *server_func(void *data_struct)
+{
+    Client* thread = (Client*) data_struct;
+
+    requestName(thread->name);
+    strcpy(name, thread->name);
+
+    while(1){
+        char input_string[MAX_STRING_LEN];
+        int numbytes = readMessage(input_string, MAX_STRING_LEN);
+        if (numbytes < 0)
             break;
-        case 'u':
-        default:
-            usage();
-        }
+        if (onRecieveDataFrom(thread, input_string, numbytes))
+            break;
     }
+    exit(0);
 }
 
 /*
@@ -244,11 +158,4 @@ int initializeSocket(int serv_port) {
     if( listen( sock , MAX_STRING_LEN ) != 0 )
         die_with_error("listen error");
     return sock;
-}
-
-void usage() {
-    fprintf(stderr, "Usage: server [-u] [-p <port>]\n");
-    fprintf(stderr, "-u for usage\n");
-    fprintf(stderr, "-p for server port\n");
-    exit(1);
 }
