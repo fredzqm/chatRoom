@@ -11,9 +11,9 @@
 // /* load xxx , return the name of the file to load
 //    true if this is a loading command.
 // */
-// int parseLoadFileName(FileInfo* info, char* str) {
-//     if (strncmp(str, "load ", 5) == 0) {
-//         strcpy(info->name, str+5);
+// int parseLoadFileName(FileInfo* info, char* buffer) {
+//     if (strncmp(buffer, "load ", 5) == 0) {
+//         strcpy(info->name, buffer+5);
 //         info->file = fopen(info->name, "r");
 //         return 1;
 //     }
@@ -22,9 +22,7 @@
 
 // // return the bits representing the file
 // int readFile(FileInfo* fileInfo, char* buffer, int maxSize) {
-//     buffer[0] = 0;
-//     buffer[1] = 0;
-//     int numbytes = fread(buffer+2, 1, maxSize-2, fileInfo->file);
+//     int numbytes = fread(buffer, 1, maxSize, fileInfo->file);
 //     return numbytes;
 // }
 

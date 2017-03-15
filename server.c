@@ -26,8 +26,7 @@ void _onRecieveBroadcast(char* data, int size) {
     printRecievedMessage(data);
 }
 
-void* _server_func(void *data_struct)
-{
+void _onStart(void* data_struct, int (*sendData)(char*, int)) {
     Client* thread = (Client*) data_struct;
 
     requestName(thread->name);
@@ -38,11 +37,50 @@ void* _server_func(void *data_struct)
         int numbytes = readMessage(input_string, MAX_STRING_LEN);
         if (numbytes < 0)
             break;
-        if (onRecieveDataFrom(thread, input_string, numbytes))
+        if (sendData(input_string, numbytes))
             break;
     }
     exit(0);
 }
+
+// void* _server_func(void *data_struct)
+// {
+//     Client* thread = (Client*) data_struct;
+
+//     requestName(thread->name);
+//     strcpy(name, thread->name);
+
+//     while(1){
+//         char buffer[MAX_STRING_LEN];
+//         int numbytes = readMessage(buffer, MAX_STRING_LEN);
+//         if (numbytes < 0)
+//             break;
+//         FileInfo info;
+//         if (parseLoadFileName(&info, buffer)) {
+//             // send file name
+//             buffer[0] = 0;
+//             buffer[1] = 1;
+//             strcpy(buffer+2, info.name);
+//             if (onRecieveDataFrom(thread, buffer, strlne(info.name) + 2))
+//                 break;
+//             // send file data
+//             while (1) {
+//                 int numbytes = readFile(&info, buffer+2, MAX_STRING_LEN-2);
+//                 if (numbytes <= 0)
+//                     break;
+//                 onRecieveDataFrom(thread, buffer, numbytes+2);
+//             }
+//             // signal the end of file transfer
+//             buffer[0] = 0;
+//             buffer[1] = 1;
+//             onRecieveDataFrom(thread, buffer,);
+//         } else {
+//             if (onRecieveDataFrom(thread, buffer, numbytes))
+//                 break;
+//         }
+//     }
+//     exit(0);
+// }
 
 int _onRecieveDataFrom(Client* thread, char* data, int size) {
     char sent[MAX_STRING_LEN];
@@ -87,7 +125,7 @@ int main(int argc, char** argv)
     onRecieveDataFrom = _onRecieveDataFrom;
     onAcceptConnection = _onAcceptConnection;
     onCloseConnection = _onCloseConnection;
-    server_func = _server_func;
+    onStart = _onStart;
     startServer(sock);
 }
 

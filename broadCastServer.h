@@ -25,6 +25,6 @@ void (*onRecieveBroadcast)(char* data, int size);
 int (*onRecieveDataFrom)(Client* thread, char* data, int size);
 void (*onAcceptConnection)(Client* thread);
 void (*onCloseConnection)(Client* thread);
-void* (*server_func)(void *arg);
+void (*onStart)(void* data_struct, int (*sendData)(char*, int));
 
 #endif

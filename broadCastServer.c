@@ -19,6 +19,7 @@
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 
 static void *thread_func(void *arg);
+static void *server_func(void *arg);
 
 Client* ls;
 int len, cap;
@@ -99,21 +100,30 @@ void broadcast(int from, char* data, int size) {
 
 void *thread_func(void *data_struct)
 {
-    Client* thread = (Client*) data_struct;
+    Client* client = (Client*) data_struct;
 
-    onAcceptConnection(thread);
+    onAcceptConnection(client);
 
     char buffer[MAX_STRING_LEN];
     while(1){
-        int numbytes = recieveMessage(thread->cid, buffer);
+        int numbytes = recieveMessage(client->cid, buffer);
         if (numbytes <= 0)
             break;
-        if (onRecieveDataFrom(ls + thread->index, buffer, numbytes))
+        if (onRecieveDataFrom(ls + client->index, buffer, numbytes))
             break;
     }
-    close(thread->cid);
+    close(client->cid);
     pthread_exit(NULL);
 }
 
 
+void sendData(char* data, int size) {
+    onRecieveDataFrom(ls, data, size);
+}
 
+void *server_func(void *data_struct) {
+    Client* client = (Client*) data_struct;
+    char name[MAX_STRING_LEN];
+    client->data = name;
+    onStart(client->data, sendData);
+}
