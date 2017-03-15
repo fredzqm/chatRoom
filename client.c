@@ -18,9 +18,10 @@ void _onRecieveBroadcast(char* data, int size) {
     printRecievedMessage(data);
 }
 
-void _onConnectionEstablished(int sock) {
+void _onStart(void* data_struct, int (*sendData)(char*, int)) {
+    char* name = (char*) data_struct;
     requestName(name);
-    if (sendMessage(sock, name, strlen(name)) < 0)
+    if (sendData(name, strlen(name)) < 0)
         die_with_error("error sending name");
 
     char input_string[MAX_STRING_LEN];
@@ -28,7 +29,7 @@ void _onConnectionEstablished(int sock) {
         int numbytes = readMessage(input_string, MAX_STRING_LEN);
         if (numbytes < 0)
             break;
-        if (sendMessage(sock, input_string, numbytes) < 0)
+        if (sendData(input_string, numbytes) < 0)
             break;
     }
 }
@@ -43,7 +44,7 @@ int main(int argc, char *argv[]) {
     int sock = connectSocket(serv_name, serv_port);
 
     onRecieveBroadcast = _onRecieveBroadcast;
-    onConnectionEstablished = _onConnectionEstablished;
+    onStart = _onStart;
     startClient(sock);
 }
 

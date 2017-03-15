@@ -1,15 +1,18 @@
 #include "broadCastClient.h"
 
-
 void *dataReciever(void*);
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 #define DEFAULT_SERVE_NAME "localhost"
 #define IP_LENGTH 20 
 
-void startClient(int sock) {
+int sock;
+
+void startClient(int _sock) {
+    sock = _sock;
+
     pthread_t pid;
-    if (pthread_create(&pid, NULL, dataReciever, &sock))
+    if (pthread_create(&pid, NULL, dataReciever, NULL))
         die_with_error("Thread not created");
 
     char received_string[MAX_STRING_LEN];
@@ -25,10 +28,12 @@ void startClient(int sock) {
         die_with_error("pthread_join() failed\n");
 }
 
+int csendData(char* data, int size) {
+    return sendMessage(sock, data, size);
+}
 
 void *dataReciever(void* arg) {
-    int sock = *((int*) arg);
-    onConnectionEstablished(sock);
+    onStart(name, csendData);
     pthread_exit(NULL);
 }
 

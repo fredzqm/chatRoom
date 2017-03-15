@@ -117,7 +117,7 @@ void *thread_func(void *data_struct)
 }
 
 
-void sendData(char* data, int size) {
+void ssendData(char* data, int size) {
     onRecieveDataFrom(ls, data, size);
 }
 
@@ -125,5 +125,5 @@ void *server_func(void *data_struct) {
     Client* client = (Client*) data_struct;
     char name[MAX_STRING_LEN];
     client->data = name;
-    onStart(client->data, sendData);
+    onStart(client->data, ssendData);
 }

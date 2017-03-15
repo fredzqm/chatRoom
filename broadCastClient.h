@@ -12,6 +12,6 @@
 void startClient(int sock);
 
 void (*onRecieveBroadcast)(char* data, int size);
-void (*onConnectionEstablished)(int sock);
+void (*onStart)(void* data_struct, int (*sendData)(char*, int));
 
 #endif
