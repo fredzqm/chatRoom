@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include "io.h"
+#include "broadCastServer.h"
 #include "fileReader.h"
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
@@ -28,7 +28,6 @@ typedef struct {
 } Client;
 
 void parseArgs(int argc, char** argv, int* port);
-int initializeSocket(int serv_port);
 void usage();
 
 void broadcast(int from, char* data, int size);

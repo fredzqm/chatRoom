@@ -15,7 +15,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "io.h"
+#include "broadCastClient.h"
 #include "fileReader.h"
 
 
@@ -46,28 +46,8 @@ void onConnectionEstablished(int sock) {
     }
 }
 
-void startClient(int sock) {
-    pthread_t pid;
-    if (pthread_create(&pid, NULL, dataReciever, &sock))
-        die_with_error("Thread not created");
-
-    char received_string[MAX_STRING_LEN];
-    while(1){
-        int numbytes = recieveMessage(sock, received_string);
-        if (numbytes <= 0)
-            break;
-        onRecieveBroadcast(received_string, numbytes);
-    }
-    close(sock);
-    
-    if (pthread_join(pid, NULL))
-        die_with_error("pthread_join() failed\n");
-}
-
-
-
-void usage();
-void parseArgs(int argc, char** argv, char** hostName, int* port);
+static void usage();
+static void parseArgs(int argc, char** argv, char** hostName, int* port);
 
 int main(int argc, char *argv[]) {
     int serv_port = DEFAULTPORT;                           /* Server port */
@@ -79,15 +59,8 @@ int main(int argc, char *argv[]) {
     int sock = connectSocket(serv_name, serv_port, ip);
     printf("Connection established with %s\n", ip);
 
-    startClient(sock);
+    startClient(sock, onRecieveBroadcast, onConnectionEstablished);
 }
-
-void *dataReciever(void* arg) {
-    int sock = *((int*)arg);
-    onConnectionEstablished(sock);
-    pthread_exit(NULL);
-}
-
 
 void parseArgs(int argc, char** argv, char** hostName, int* port) {
     int ch;
@@ -108,34 +81,6 @@ void parseArgs(int argc, char** argv, char** hostName, int* port) {
         }
     }
 }
-
-int connectSocket(char* serv_name, int serv_port, char* ip) {
-    /* Create a TCP socket */
-    int sock;                                       /* Socket  */
-    if((sock = socket(AF_INET , SOCK_STREAM , 0 ) ) < 0)
-        die_with_error("socket error");
-
-    /* parse the host name */
-    struct hostent *host;
-    if ((host=gethostbyname(serv_name)) == NULL)
-        die_with_error("gethostbyname() failed");
-    struct in_addr ** addr_list = (struct in_addr **) host->h_addr_list;
-    strcpy(ip , inet_ntoa(*addr_list[0]));
-    unsigned long s_addr = *((unsigned long *)host->h_addr_list[0]);
-
-    /* Construct local address structure */
-    struct sockaddr_in serv_addr;                   /* Server address */
-    memset(&serv_addr, 0, sizeof(serv_addr));       /* Zero out structure */
-    serv_addr.sin_family = AF_INET;                 /* Internet address family */
-    serv_addr.sin_addr.s_addr = s_addr; /* Server address */
-    serv_addr.sin_port = htons(serv_port);          /* Local port */
-
-    /* Connect to server socket */
-    if (connect(sock , (struct sockaddr*) &serv_addr , sizeof(serv_addr) ) != 0)
-        die_with_error("connect error");
-    return sock;
-}
-
 
 /* usage - print description of command arguments */
 void usage() {
