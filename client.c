@@ -18,20 +18,19 @@
 #include "broadCastClient.h"
 #include "fileReader.h"
 
-
-int connectSocket(char* serv_name, int serv_port, char* ip);
-void *dataReciever(void*);
-
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 #define DEFAULT_SERVE_NAME "localhost"
 #define IP_LENGTH 20 
 
+static int connectSocket(char* serv_name, int serv_port, char* ip);
+static void usage();
+static void parseArgs(int argc, char** argv, char** hostName, int* port);
 
-void onRecieveBroadcast(char* data, int size) {
+void _onRecieveBroadcast(char* data, int size) {
     printRecievedMessage(data);
 }
 
-void onConnectionEstablished(int sock) {
+void _onConnectionEstablished(int sock) {
     requestName(name);
     if (sendMessage(sock, name, strlen(name)) < 0)
         die_with_error("error sending name");
@@ -46,8 +45,6 @@ void onConnectionEstablished(int sock) {
     }
 }
 
-static void usage();
-static void parseArgs(int argc, char** argv, char** hostName, int* port);
 
 int main(int argc, char *argv[]) {
     int serv_port = DEFAULTPORT;                           /* Server port */
@@ -59,7 +56,9 @@ int main(int argc, char *argv[]) {
     int sock = connectSocket(serv_name, serv_port, ip);
     printf("Connection established with %s\n", ip);
 
-    startClient(sock, onRecieveBroadcast, onConnectionEstablished);
+    onRecieveBroadcast = _onRecieveBroadcast;
+    onConnectionEstablished = _onConnectionEstablished;
+    startClient(sock);
 }
 
 void parseArgs(int argc, char** argv, char** hostName, int* port) {
@@ -91,3 +90,32 @@ void usage() {
     fprintf(stderr, "-p for server port\n");
     exit(1);
 }
+
+
+int connectSocket(char* serv_name, int serv_port, char* ip) {
+    /* Create a TCP socket */
+    int sock;                                       /* Socket  */
+    if((sock = socket(AF_INET , SOCK_STREAM , 0 ) ) < 0)
+        die_with_error("socket error");
+
+    /* parse the host name */
+    struct hostent *host;
+    if ((host=gethostbyname(serv_name)) == NULL)
+        die_with_error("gethostbyname() failed");
+    struct in_addr ** addr_list = (struct in_addr **) host->h_addr_list;
+    strcpy(ip , inet_ntoa(*addr_list[0]));
+    unsigned long s_addr = *((unsigned long *)host->h_addr_list[0]);
+
+    /* Construct local address structure */
+    struct sockaddr_in serv_addr;                   /* Server address */
+    memset(&serv_addr, 0, sizeof(serv_addr));       /* Zero out structure */
+    serv_addr.sin_family = AF_INET;                 /* Internet address family */
+    serv_addr.sin_addr.s_addr = s_addr; /* Server address */
+    serv_addr.sin_port = htons(serv_port);          /* Local port */
+
+    /* Connect to server socket */
+    if (connect(sock , (struct sockaddr*) &serv_addr , sizeof(serv_addr) ) != 0)
+        die_with_error("connect error");
+    return sock;
+}
+

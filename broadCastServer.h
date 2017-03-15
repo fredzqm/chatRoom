@@ -13,7 +13,6 @@ typedef struct {
 } Client;
 
 
-int initializeSocket(int serv_port);
 
 void closeConnection(int from);
 

@@ -21,11 +21,11 @@
 #include "io.h"
 
 
-int connectSocket(char* serv_name, int serv_port, char* ip);
 
-void startClient(int sock, 
-	void (*onRecieveBroadcast)(char* data, int size),
-	void (*onConnectionEstablished)(int sock)
-	);
+void startClient(int sock);
+void startClient(int sock);
+
+void (*onRecieveBroadcast)(char* data, int size);
+void (*onConnectionEstablished)(int sock);
 
 #endif
