@@ -14,11 +14,11 @@
 #include <pthread.h>
 
 #include "broadCastServer.h"
+#include "socketFactory.h"
 #include "fileReader.h"
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 
-static int initializeSocket(int serv_port);
 static void parseArgs(int argc, char** argv, int* port);
 static void usage();
 
@@ -102,29 +102,3 @@ void usage() {
     exit(1);
 }
 
-
-/*
-    Creates a socket. handle the error it any step fails
-*/
-int initializeSocket(int serv_port) {
-    /* Create a TCP socket - the welcome socket */
-    int sock;                         /* Socket  */
-    if( (sock = socket(AF_INET , SOCK_STREAM , 0 )) < 0){
-        die_with_error("socket error");
-    }
-  
-    /* Construct local address structure */
-    struct sockaddr_in serv_addr;     /* Local address */
-    memset(&serv_addr, 0, sizeof(serv_addr));      /* Zero out structure */
-    serv_addr.sin_family = AF_INET;                /* Internet address family */
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY); /* Any incoming interface */
-    serv_addr.sin_port = htons(serv_port);         /* Local port */
-
-    /* Bind to the local address */
-    if( bind(sock , (struct sockaddr*)&serv_addr , sizeof(serv_addr)) != 0)
-        die_with_error("bind error");
-    /* Wait for incoming requests */  
-    if( listen( sock , MAX_STRING_LEN ) != 0 )
-        die_with_error("listen error");
-    return sock;
-}
