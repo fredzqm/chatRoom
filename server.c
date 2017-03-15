@@ -156,7 +156,6 @@ int main(int argc, char** argv)
 }
 
 
-
 void closeConnection(int from) {
     Client* thread = ls + from;
     close(thread->cid);

@@ -29,7 +29,22 @@ void *dataReciever(void* arg);
 #define DEFAULT_SERVE_NAME "localhost"
 #define IP_LENGTH 20 
 
-int running = 1;
+
+void onRecieveBroadcast(char* data, int size) {
+    printRecievedMessage(data);
+}
+
+void onConnectionEstablished(int sock) {
+    char input_string[MAX_STRING_LEN];
+    while (1) { /* run until user enters "." to quit. */
+        int numbytes = readMessage(input_string, MAX_STRING_LEN);
+        if (numbytes < 0)
+            break;
+        if (sendMessage(sock, input_string, numbytes) < 0)
+            break;
+    }
+}
+
 
 int main(int argc, char *argv[]) {
     int serv_port = DEFAULTPORT;                           /* Server port */
@@ -49,35 +64,26 @@ int main(int argc, char *argv[]) {
     if (pthread_create(&pid, NULL, dataReciever, &sock))
         die_with_error("Thread not created");
 
-    char input_string[MAX_STRING_LEN];
-    while (running) { /* run until user enters "." to quit. */
-        int numbytes = readMessage(input_string, MAX_STRING_LEN);
-        if (numbytes < 0)
+    char received_string[MAX_STRING_LEN];
+    while(1){
+        int numbytes = recieveMessage(sock, received_string);
+        if (numbytes <= 0)
             break;
-        if (sendMessage(sock, input_string, numbytes) < 0)
-            break;
+        onRecieveBroadcast(received_string, numbytes);
     }
-
+    close(sock);
+    
     if (pthread_join(pid, NULL))
         die_with_error("pthread_join() failed\n");
 
-    /* Close socket */
-    printf("closing");
-    close(sock);
 }
 
 void *dataReciever(void* arg) {
     int sock = *((int*)arg);
-    char received_string[MAX_STRING_LEN];
-    while(1){
-        int numBytes = recieveMessage(sock, received_string);
-        if (numBytes <= 0)
-            break;
-        printRecievedMessage(received_string);
-    }
-    running = 0;
+    onConnectionEstablished(sock);
     pthread_exit(NULL);
 }
+
 
 void parseArgs(int argc, char** argv, char** hostName, int* port) {
     int ch;
@@ -129,10 +135,10 @@ int connectSocket(char* serv_name, int serv_port, char* ip) {
 
 /* usage - print description of command arguments */
 void usage() {
-  fprintf(stderr, "Usage: client [-u] [-v] -h <server> [-p <port>]\n");
-  fprintf(stderr, "-u for usage\n");
-  fprintf(stderr, "-v for verbose mode\n");
-  fprintf(stderr, "-h for server name\n");
-  fprintf(stderr, "-p for server port\n");
-  exit(1);
+    fprintf(stderr, "Usage: client [-u] [-v] -h <server> [-p <port>]\n");
+    fprintf(stderr, "-u for usage\n");
+    fprintf(stderr, "-v for verbose mode\n");
+    fprintf(stderr, "-h for server name\n");
+    fprintf(stderr, "-p for server port\n");
+    exit(1);
 }
