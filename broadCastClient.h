@@ -10,6 +10,9 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#ifndef chatRoom_broadCastClient
+#define chatRoom_broadCastClient
+
 #include <string.h>
 #include <unistd.h>
 #include <netinet/in.h>
@@ -24,3 +27,5 @@ void startClient(int sock,
 	void (*onRecieveBroadcast)(char* data, int size),
 	void (*onConnectionEstablished)(int sock)
 	);
+
+#endif

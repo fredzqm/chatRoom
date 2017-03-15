@@ -1,3 +1,6 @@
+#ifndef chatRoom_FileReader
+#define chatRoom_FileReader
+
 #include <stdio.h>
 #include <string.h>
 
@@ -34,3 +37,4 @@ int checkForFile(FileInfo* info, char* data, int size);
 int writeFile(FileInfo* fileInfo, char* data, int size);
 
 
+#endif

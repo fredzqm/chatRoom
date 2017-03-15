@@ -1,3 +1,6 @@
+#ifndef chatRoom_IO
+#define chatRoom_IO
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -15,3 +18,5 @@ void die_with_error(char *error_message);
 
 
 char name[MAX_STRING_LEN];
+
+#endif
