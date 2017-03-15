@@ -1,6 +1,6 @@
 #include "broadCastClient.h"
 
-void *dataReciever(void*);
+static void *dataReciever(void*);
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 #define DEFAULT_SERVE_NAME "localhost"
@@ -28,12 +28,12 @@ void startClient(int _sock) {
         perror("pthread_join() failed\n");
 }
 
-int csendData(char* data, int size) {
+static int sendData(char* data, int size) {
     return send(sock, data, size, 0);
 }
 
-void *dataReciever(void* arg) {
+static void *dataReciever(void* arg) {
     char name[MAX_STRING_LEN];
-    onStart(name, csendData);
+    onStart(name, sendData);
 }
 

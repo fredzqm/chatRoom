@@ -98,7 +98,7 @@ void broadcast(int from, char* data, int size) {
 }
 
 
-void *thread_func(void *data_struct)
+static void *thread_func(void *data_struct)
 {
     Client* client = (Client*) data_struct;
 
@@ -117,13 +117,13 @@ void *thread_func(void *data_struct)
 }
 
 
-int ssendData(char* data, int size) {
+static int sendData(char* data, int size) {
     return onRecieveDataFrom(ls, data, size);
 }
 
-void *server_func(void *data_struct) {
+static void *server_func(void *data_struct) {
     Client* client = (Client*) data_struct;
     char name[MAX_STRING_LEN];
     client->data = name;
-    onStart(client->data, ssendData);
+    onStart(client->data, sendData);
 }

@@ -14,6 +14,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
+#define MAX_STRING_LEN 1024
 
 int readMessage(char* buffer, int maxSize);
 void requestName(char* buffer);
