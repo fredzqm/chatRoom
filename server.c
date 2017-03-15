@@ -26,6 +26,24 @@ void _onRecieveBroadcast(char* data, int size) {
     printRecievedMessage(data);
 }
 
+void* _server_func(void *data_struct)
+{
+    Client* thread = (Client*) data_struct;
+
+    requestName(thread->name);
+    strcpy(name, thread->name);
+
+    while(1){
+        char input_string[MAX_STRING_LEN];
+        int numbytes = readMessage(input_string, MAX_STRING_LEN);
+        if (numbytes < 0)
+            break;
+        if (onRecieveDataFrom(thread, input_string, numbytes))
+            break;
+    }
+    exit(0);
+}
+
 int _onRecieveDataFrom(Client* thread, char* data, int size) {
     char sent[MAX_STRING_LEN];
     int isExit = strcmp("exit", data) == 0;
@@ -69,6 +87,7 @@ int main(int argc, char** argv)
     onRecieveDataFrom = _onRecieveDataFrom;
     onAcceptConnection = _onAcceptConnection;
     onCloseConnection = _onCloseConnection;
+    server_func = _server_func;
     startServer(sock);
 }
 

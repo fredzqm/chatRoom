@@ -19,7 +19,6 @@
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 
 static void *thread_func(void *arg);
-static void *server_func(void *arg);
 
 Client* ls;
 int len, cap;
@@ -116,21 +115,5 @@ void *thread_func(void *data_struct)
     pthread_exit(NULL);
 }
 
-void *server_func(void *data_struct)
-{
-    Client* thread = (Client*) data_struct;
 
-    requestName(thread->name);
-    strcpy(name, thread->name);
-
-    while(1){
-        char input_string[MAX_STRING_LEN];
-        int numbytes = readMessage(input_string, MAX_STRING_LEN);
-        if (numbytes < 0)
-            break;
-        if (onRecieveDataFrom(thread, input_string, numbytes))
-            break;
-    }
-    exit(0);
-}
 
