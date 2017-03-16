@@ -5,9 +5,7 @@
 #define FILENAME_BUFFER_SIZE 128
 
 
-#define EXIT 0
 #define MESSAGE 1
-#define NAME 10
 #define FILENAME 2
 #define FILEDATA 3
 #define FILEEND 4
@@ -31,9 +29,9 @@ static int readMessage(char* buffer, int maxSize) {
 static int processAndSend(char* buffer, int size, int (*sendData)(char*, int)) {
     char sent[BUFFER_SIZE];
     if (strcmp(buffer, "exit") == 0) {
-        sent[0] = EXIT;
-        strcpy(sent+1, name);
-        sendData(sent, strlen(name) + 2);
+        sent[0] = MESSAGE;
+        sprintf(sent+1, "%s exited the chat", name);
+        sendData(sent, strlen(sent+1) + 2);
         exit(0);
     } else if (strncmp(buffer, "load ", 5) == 0) {
         int fileNameLen = strlen(buffer+5);
@@ -78,8 +76,8 @@ void *send_func(void *data_struct) {
     name[strlen(name) - 1] = 0;
     
     char buffer[BUFFER_SIZE];
-    buffer[0] = NAME;
-    strcpy(buffer+1, name);
+    buffer[0] = MESSAGE;
+    sprintf(buffer+1, "%s entered the chat", name);
     if (sendData(buffer, strlen(buffer+1) + 2) < 0) {
         perror("error sending name");
         exit(2);
@@ -101,14 +99,16 @@ static void onRecieveData(char* data, int size) {
         printf("\r                                           \r");
         printf("%s\n", data+1);
         printPrompt();
-    } else if (data[0] == NAME) {
-        printf("%s is entering the chat", data+1);
     } else if (data[0] == FILENAME) {
         char fileName[FILENAME_BUFFER_SIZE];
         strcpy(fileName, data+1);
         FILE* file = fopen(fileName, "w");
+        printf("Recieving file %s ", fileName);
+        fflush(stdout);
         while(1){
             getNextPacket(&data, &size);
+            printf(".");
+            fflush(stdout);
             if (size < 0) {
                 perror("size negative");
                 exit(2);
@@ -122,6 +122,7 @@ static void onRecieveData(char* data, int size) {
             fwrite(data+1, 1, size-1, file);
             free(data);
         }
+        printf("\n");
     } else {
         fprintf(stderr, "Unrecognized message type %d\n", data[0]);
         exit(2);
