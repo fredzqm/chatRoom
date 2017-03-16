@@ -13,7 +13,6 @@
 Buffer* buffer;
 
 static void onRecieveBroadcast(char* data, int size) {
-    _onRecieveBroadcast(data, size);
     addToBuffer(buffer, data, size);
 }
 
@@ -111,7 +110,9 @@ static void closeConnection(Client* client) {
 }
 
 static int ssendData(char* data, int size) {
-    broadcast(MYSELF, data, size);
+    char buf[size+2];
+    size = serializeData(buf, data, size);
+    broadcast(MYSELF, buf, size);
     return size;
 }
 
@@ -162,7 +163,9 @@ void startClient(int _sock, ThreadProc** threadls, int numThread, pthread_t* thr
 }
 
 static int csendData(char* data, int size) {
-    return send(sock, data, size, 0);
+    char buf[size+2];
+    size = serializeData(buf, data, size);
+    return send(sock, buf, size, 0);
 }
 
 

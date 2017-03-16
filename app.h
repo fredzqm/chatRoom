@@ -16,6 +16,8 @@
 
 #define MAX_STRING_LEN 1024
 
+#include "broadCastServer.h"
+
 typedef struct 
 {
 	char name[100];
@@ -28,7 +30,10 @@ void requestName(char* buffer);
 void printRecievedMessage(char* message);
 
 int processAndSend(char* buffer, int size, int (*sendData)(char*, int));
-void _onRecieveBroadcast(char* data, int size);
+void onRecieveData(char* data, int size);
+
+void *send_func(void *data_struct);
+void *recv_func(void *data_struct);
 
 char name[MAX_STRING_LEN];
 

@@ -3,7 +3,6 @@
  * @author Fred Zhang
  */
 
-#include "broadCastServer.h"
 #include "socketFactory.h"
 #include "app.h"
 
@@ -14,26 +13,6 @@
 static void usage();
 static void parseArgs(int argc, char** argv, char** hostName, int* port);
 
-void *dataReciever(void* arg) {
-    SendDataFun* sendData = (SendDataFun*) arg;
-    
-    char name[MAX_STRING_LEN];
-    requestName(name);
-
-    if (sendData(name, strlen(name)) < 0)
-        perror("error sending name");
-
-    char buffer[MAX_STRING_LEN];
-    while (1) { /* run until user enters "." to quit. */
-        int numbytes = readMessage(buffer, MAX_STRING_LEN);
-        if (numbytes < 0)
-            break;
-        if (processAndSend(buffer, numbytes, sendData) < 0)
-            break;
-    }
-    return NULL;
-}
-
 
 int main(int argc, char *argv[]) {
     int serv_port = DEFAULTPORT;                           /* Server port */
@@ -43,8 +22,8 @@ int main(int argc, char *argv[]) {
     parseArgs(argc, argv, &serv_name, &serv_port);
     int sock = connectSocket(serv_name, serv_port);
 
-    ThreadProc* threads[] = {dataReciever};
-    startClient(sock, threads, 1, NULL);
+    ThreadProc* threads[] = {send_func, recv_func};
+    startClient(sock, threads, 2, NULL);
 }
 
 void parseArgs(int argc, char** argv, char** hostName, int* port) {

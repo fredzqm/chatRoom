@@ -10,9 +10,15 @@ Buffer* createBuffer() {
 }
 
 void addToBuffer(Buffer* buffer, char* data, int size) {
+	if (size == 0)
+		return;
 	if (buffer->packBuf == NULL) {
-		long packSize = (data[0] << 8)  & 0xff00 | 
-						(data[1])       & 0x00ff ;   
+		if (size < 2) {
+			perror("Not enough data for packetSize yet");
+			exit(-1);
+		}
+		int packSize = (data[0] << 8)  & 0xff00 | 
+					   (data[1])       & 0x00ff ;   
 		buffer->packBuf = (char*) malloc(packSize);
 		if (buffer->packBuf == NULL) {
 			perror("malloc fails");
@@ -20,12 +26,14 @@ void addToBuffer(Buffer* buffer, char* data, int size) {
 		}
 		buffer->filled = 0;
 		buffer->nextSize = packSize;
-		sem_post(&buffer->semphore);
 		addToBuffer(buffer, data+2, size-2);
 	} else  {
 		int needed = buffer->nextSize - buffer->filled;
 		if (needed <= size) {
 			memcpy(buffer->packBuf + buffer->filled, data, needed);
+			buffer->packets[buffer->end].size = buffer->nextSize;
+			buffer->packets[buffer->end].data = buffer->packBuf;
+			
 			buffer->end++;
 			if (buffer->end == PACKET_BUFFER)
 				buffer->end = 0;
@@ -33,8 +41,8 @@ void addToBuffer(Buffer* buffer, char* data, int size) {
 				perror("Buffer overflow");
 				exit(0);
 			}
-			buffer->packets[buffer->end].size = buffer->nextSize;
-			buffer->packets[buffer->end].data = buffer->packBuf;
+
+			sem_post(&buffer->semphore);
 
 			buffer->packBuf = NULL;
 			addToBuffer(buffer, data + needed, size - needed);
@@ -54,3 +62,9 @@ void readBuffer(Buffer* buffer, char** data, int* size) {
 }
 
 
+int serializeData(char* buffer, char* data, int size) {
+	buffer[0] = (size >> 8) & 0xff ;
+	buffer[1] = (size)      & 0xff ;
+	memcpy(buffer+2, data, size);
+	return size+2;
+}

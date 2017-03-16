@@ -68,8 +68,29 @@ int processAndSend(char* buffer, int size, int (*sendData)(char*, int)) {
 }
 
 
+void *send_func(void *data_struct) {
+    SendDataFun* sendData = (SendDataFun*) data_struct;
+    
+    requestName(name);
+
+    if (sendData(name, strlen(name)) < 0)
+        perror("error sending name");
+
+    char buffer[MAX_STRING_LEN];
+    while (1) { /* run until user enters "." to quit. */
+        int numbytes = readMessage(buffer, MAX_STRING_LEN);
+        if (numbytes < 0)
+            break;
+        if (processAndSend(buffer, numbytes, sendData) < 0)
+            break;
+    }
+    return NULL;
+}
+
+
+
 FileInfo info;
-void _onRecieveBroadcast(char* data, int size) {
+void onRecieveData(char* data, int size) {
     if (data[0] == 0) {
         if (data[1] == 1) {
             if (info.name[1] == 0) {
@@ -86,5 +107,20 @@ void _onRecieveBroadcast(char* data, int size) {
         data[size] = 0;
         printRecievedMessage(data);
     }
-    // printf("%s\n%d\n", data, size);
+}
+
+void *recv_func(void *data_struct) {
+    SendDataFun* sendData = (SendDataFun*) data_struct;
+    while(1){
+        char* data;
+        int numbytes;
+        getNextPacket(&data, &numbytes);
+        if (numbytes < 0) {
+            perror("numbytes negative");
+            break;
+        }
+        onRecieveData(data, numbytes);
+        free(data);
+    }
+    exit(0);
 }

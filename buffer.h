@@ -15,7 +15,7 @@
 #include <arpa/inet.h>
 #include <semaphore.h>
 
-#define PACKET_BUFFER 10
+#define PACKET_BUFFER 1024
 
 typedef struct
 {
@@ -51,5 +51,10 @@ void addToBuffer(Buffer* buffer, char* data, int size);
  * you free it after you use it 
  */
 void readBuffer(Buffer* buffer, char** data, int* size);
+
+/*
+ * serielaize the data and size format into packet format
+ */
+int serializeData(char* buffer, char* data, int size);
 
 #endif

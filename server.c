@@ -23,19 +23,20 @@ static void parseArgs(int argc, char** argv, int* port);
 static void usage();
 
 
-void *server_func(void *data_struct) {
-    SendDataFun* sendData = (SendDataFun*) data_struct;
-    requestName(name);
-    while(1){
-        char buffer[MAX_STRING_LEN];
-        int numbytes = readMessage(buffer, MAX_STRING_LEN);
-        if (numbytes < 0)
-            break;
-        if (processAndSend(buffer, numbytes, sendData) < 0)
-            break;
-    }
-    exit(0);
-}
+// void *send_func(void *data_struct) {
+//     SendDataFun* sendData = (SendDataFun*) data_struct;
+//     requestName(name);
+//     while(1){
+//         char buffer[MAX_STRING_LEN];
+//         int numbytes = readMessage(buffer, MAX_STRING_LEN);
+//         if (numbytes < 0)
+//             break;
+//         if (processAndSend(buffer, numbytes, sendData) < 0)
+//             break;
+//     }
+//     exit(0);
+// }
+
 
 int main(int argc, char** argv)
 {
@@ -43,8 +44,8 @@ int main(int argc, char** argv)
     parseArgs(argc, argv, &serv_port);  /* Server port */
     int sock = initializeSocket(serv_port);
 
-    ThreadProc* threads[] = {server_func};
-    startServer(sock, threads, 1, NULL);
+    ThreadProc* threads[] = {send_func, recv_func};
+    startServer(sock, threads, 2, NULL);
 }
 
 
