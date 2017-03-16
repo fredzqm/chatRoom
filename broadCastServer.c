@@ -30,6 +30,19 @@ static void *thread_func(void *data_struct);
 static void closeConnection(Client* client);
 
 
+
+static void spawnThreads(ThreadProc** threadls, int numThread, pthread_t* threadidls, SendDataFun* sendData) {
+    pthread_t temp[numThread];
+    if (threadidls == NULL)
+        threadidls = temp;
+    for (int i = 0; i < numThread; i++) {
+        if (pthread_create(&threadidls[i], NULL, threadls[i], sendData)) {
+            perror("Thread not created");
+        }
+    }
+}
+
+
 Client* ls;
 int len, cap;
 
@@ -38,15 +51,7 @@ void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* thre
     buffer = createBuffer();
 
     // spawning threads for server
-    pthread_t temp[numThread];
-    if (threadidls == NULL)
-        threadidls = temp;
-    for (int i = 0; i < numThread; i++) {
-        if (pthread_create(&threadidls[i], NULL, threadls[i], ssendData)) {
-            perror("Thread not created");
-        }
-    }
-
+    spawnThreads(threadls, numThread, threadidls, ssendData);
 
     len = 0; cap = 5;
     ls = (Client*) malloc(sizeof(Client) * cap);
@@ -142,15 +147,8 @@ void startClient(int _sock, ThreadProc** threadls, int numThread, pthread_t* thr
     buffer = createBuffer();
     
     sock = _sock;
-    // spawning threads for client
-    pthread_t temp[numThread];
-    if (threadidls == NULL)
-        threadidls = temp;
-    for (int i = 0; i < numThread; i++) {
-        if (pthread_create(&threadidls[i], NULL, threadls[i], csendData)) {
-            perror("Thread not created");
-        }
-    }
+
+    spawnThreads(threadls, numThread, threadidls, csendData);
 
     char received_string[MAX_STRING_LEN];
     while(1){

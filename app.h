@@ -24,14 +24,6 @@ typedef struct
 	FILE* file;
 } FileInfo;
 
-
-int readMessage(char* buffer, int maxSize);
-void requestName(char* buffer);
-void printRecievedMessage(char* message);
-
-int processAndSend(char* buffer, int size, int (*sendData)(char*, int));
-void onRecieveData(char* data, int size);
-
 void *send_func(void *data_struct);
 void *recv_func(void *data_struct);
 

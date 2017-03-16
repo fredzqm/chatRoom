@@ -1,19 +1,19 @@
 #include <stdlib.h>
 #include "app.h"
 
-void requestName(char* buffer) {
+static void requestName(char* buffer) {
     printf("Provide user name: ");
     if (fgets(buffer, MAX_STRING_LEN, stdin) == NULL)
         perror("Fail to get name");
     buffer[strlen(buffer)-1] = 0;
 }
 
-void printPrompt() {
+static void printPrompt() {
     printf("<%s> : ", name);
     fflush(stdout);
 }
 
-int readMessage(char* buffer, int maxSize) {
+static int readMessage(char* buffer, int maxSize) {
     printPrompt();
     if (fgets(buffer, maxSize, stdin) == NULL)
         perror("Fail to get message or command");
@@ -22,7 +22,7 @@ int readMessage(char* buffer, int maxSize) {
     return size;
 }
 
-void printRecievedMessage(char* message) {
+static void printRecievedMessage(char* message) {
     printf("\r                                           \r");
     printf("%s\n", message);
     printPrompt();
@@ -38,7 +38,7 @@ static int parseLoadFileName(FileInfo* info, char* buffer) {
 }
 
 
-int processAndSend(char* buffer, int size, int (*sendData)(char*, int)) {
+static int processAndSend(char* buffer, int size, int (*sendData)(char*, int)) {
     FileInfo info;
     // printf("%s\n%d\n", buffer, size);
     if (parseLoadFileName(&info, buffer)) {
@@ -90,7 +90,7 @@ void *send_func(void *data_struct) {
 
 
 FileInfo info;
-void onRecieveData(char* data, int size) {
+static void onRecieveData(char* data, int size) {
     if (data[0] == 0) {
         if (data[1] == 1) {
             if (info.name[1] == 0) {
@@ -110,7 +110,7 @@ void onRecieveData(char* data, int size) {
 }
 
 void *recv_func(void *data_struct) {
-    SendDataFun* sendData = (SendDataFun*) data_struct;
+    // SendDataFun* sendData = (SendDataFun*) data_struct;
     while(1){
         char* data;
         int numbytes;
