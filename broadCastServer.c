@@ -17,7 +17,7 @@
 #include "fileReader.h"
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
-
+#define MYSELF -1
 
 static void broadcast(int from, char* data, int size);
 static void *thread_func(void *data_struct);
@@ -26,23 +26,25 @@ Client* ls;
 int len, cap;
 
 static int sendData(char* data, int size) {
-    broadcast(0, data, size);
+    broadcast(MYSELF, data, size);
     return size;
 }
 
-void startServer(int sock, ThreadProc* server_func) {
-    len = 1; cap = 5;
+void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls) {
+    len = 0; cap = 5;
     ls = (Client*) malloc(sizeof(Client) * cap);
     if (ls == NULL)
         perror("malloc fails");
 
     /* This thread is responsible for handling inputs from the server */
-    ls[0].index = 0;
-    ls[0].cid = 0;
-
-    /* Spawn thread */
-    if (pthread_create(&ls[0].tid, NULL, server_func, (void *) sendData))
-        perror("Thread not created");
+    pthread_t temp[numThread];
+    if (threadidls == NULL)
+        threadidls = temp;
+    for (int i = 0; i < numThread; i++) {
+        if (pthread_create(&threadidls[i], NULL, threadls[i], sendData)) {
+            perror("Thread not created");
+        }
+    }
     
     struct sockaddr addr;
     socklen_t addrlen;    
@@ -88,14 +90,14 @@ void closeConnection(Client* client) {
 
 void broadcast(int from, char* data, int size) {
     int i;
-    for (i = 1; i < len; i++) {
+    for (i = 0; i < len; i++) {
         if (from != i && ls[i].cid != 0) {
             if (send(ls[i].cid, data, size, 0) < 0) {
                 closeConnection(ls + i);
             }
         }
     }
-    if (from != 0) {
+    if (from != MYSELF) {
         // onRecieveBroadcast(data, size);
     }
 }

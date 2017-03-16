@@ -26,6 +26,6 @@ typedef struct {
 typedef int SendDataFun(char*, int);
 typedef void* ThreadProc(void*);
 
-void startServer(int sock, ThreadProc* server_func);
+void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls);
 
 #endif
