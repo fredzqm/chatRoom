@@ -1,19 +1,32 @@
 # Chat Room
 ##### This project consists of a little framework to build a chat room.
 
+### Run the code
+
+You can type `make` to compile all the codes.
+
+Launch ./server and ./client, like
+    
+    ./client [-p portNumber] [-h hostName]
+    ./server [-p portNumber]
+
+portNumber default to be 5555. hostName default to be localhost.
+
+You can launch multiple instance of the clients, and all of them will
+appear in the same chat room.
+
+
 ### Functionalities
 
-You can type make to compile all the codes.
-
-Launch ./client and ./server.
-
-There are three types of commands you can type:
+There are three types of commands you can type in a chat:
 
 1. exit         
         to exit the chat room
 2. loat \<fileName\>   
-        to transfer some file
+        To transfer some file. This file will be transfered to everyone else
+        and saved at the same relative location.
 3. Any other unrecognized commands are treated as regular messages
+        Other people will recieve a message indicating you said ...
 
 ### Files
 
