@@ -76,11 +76,30 @@ void startServer(int sock) {
 }
 
 
+int onRecieveDataFrom(Client* thread, char* data, int size) {
+    char sent[MAX_STRING_LEN];
+    int isExit = strcmp("exit", data) == 0;
+    if (isExit) {
+        closeConnection(thread->index);
+    } else {
+        sprintf(sent, "<%s> : %s", (char*) thread->data, data);
+        broadcast(thread->index, sent, strlen(sent));
+    }
+    return isExit;
+}
+
 void closeConnection(int from) {
-    Client* thread = ls + from;
-    close(thread->cid);
-    thread->cid = 0;
-    onCloseConnection(thread);
+    Client* client = ls + from;
+    close(client->cid);
+    client->cid = 0;
+    char message[MAX_STRING_LEN];
+    if (client->index == 0) {
+        sprintf(message, "<%s>(The server) closed the chat...", (char*) client->data);
+    } else {
+        sprintf(message, "<%s> exits the chat...", (char*) client->data);
+        free(client->data);
+    }
+    broadcast(client->index, message, strlen(message));
 }
 
 void broadcast(int from, char* data, int size) {
@@ -97,14 +116,19 @@ void broadcast(int from, char* data, int size) {
     }
 }
 
-
 static void *thread_func(void *data_struct)
 {
     Client* client = (Client*) data_struct;
 
-    onAcceptConnection(client);
-
     char buffer[MAX_STRING_LEN];
+    if (recv(client->cid, buffer, MAX_STRING_LEN, 0) < 0)
+        perror("failed to recieve name");
+    client->data = malloc(sizeof(char) * (strlen(buffer) + 1));
+    strcpy((char*)client->data, buffer);
+
+    sprintf(buffer, "<%s> is entering the chat", (char*) client->data);
+    broadcast(client->index, buffer, strlen(buffer));
+
     while(1){
         int numbytes = recv(client->cid, buffer, MAX_STRING_LEN, 0);
         if (numbytes <= 0)
@@ -113,9 +137,7 @@ static void *thread_func(void *data_struct)
             break;
     }
     close(client->cid);
-    pthread_exit(NULL);
 }
-
 
 static int sendData(char* data, int size) {
     return onRecieveDataFrom(ls, data, size);

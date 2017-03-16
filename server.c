@@ -40,41 +40,6 @@ void _onStart(void* data_struct, int (*sendData)(char*, int)) {
 }
 
 
-int _onRecieveDataFrom(Client* thread, char* data, int size) {
-    char sent[MAX_STRING_LEN];
-    int isExit = strcmp("exit", data) == 0;
-    if (isExit) {
-        closeConnection(thread->index);
-    } else {
-        sprintf(sent, "<%s> : %s", (char*) thread->data, data);
-        broadcast(thread->index, sent, strlen(sent));
-    }
-    return isExit;
-}
-
-void _onAcceptConnection(Client* thread) {
-    char buffer[MAX_STRING_LEN];
-    if (recv(thread->cid, buffer, MAX_STRING_LEN, 0) < 0)
-        perror("failed to recieve name");
-    thread->data = malloc(sizeof(char) * (strlen(buffer) + 1));
-    strcpy((char*)thread->data, buffer);
-
-    sprintf(buffer, "<%s> is entering the chat", (char*) thread->data);
-    broadcast(thread->index, buffer, strlen(buffer));
-}
-
-void _onCloseConnection(Client* client) {
-    char message[MAX_STRING_LEN];
-    if (client->index == 0) {
-        sprintf(message, "<%s>(The server) closed the chat...", (char*) client->data);
-    } else {
-        sprintf(message, "<%s> exits the chat...", (char*) client->data);
-        free(client->data);
-    }
-    broadcast(client->index, message, strlen(message));
-}
-
-
 int main(int argc, char** argv)
 {
     int serv_port = DEFAULTPORT;
@@ -82,9 +47,6 @@ int main(int argc, char** argv)
     int sock = initializeSocket(serv_port);
 
     onRecieveBroadcast = _onRecieveBroadcast;
-    onRecieveDataFrom = _onRecieveDataFrom;
-    onAcceptConnection = _onAcceptConnection;
-    onCloseConnection = _onCloseConnection;
     onStart = _onStart;
     startServer(sock);
 }
