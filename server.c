@@ -43,8 +43,6 @@ int main(int argc, char** argv)
     parseArgs(argc, argv, &serv_port);  /* Server port */
     int sock = initializeSocket(serv_port);
 
-    onRecieveBroadcast = _onRecieveBroadcast;
-    
     ThreadProc* threads[] = {server_func};
     startServer(sock, threads, 1, NULL);
 }

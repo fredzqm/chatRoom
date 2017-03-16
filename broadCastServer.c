@@ -7,6 +7,22 @@
 #define MYSELF -1
 
 /*
+ * buffer management
+ */
+
+Buffer* buffer;
+
+static void onRecieveBroadcast(char* data, int size) {
+    _onRecieveBroadcast(data, size);
+    addToBuffer(buffer, data, size);
+}
+
+void getNextPacket(PACKET* packet) {
+    readBuffer(buffer, packet);
+}
+
+
+/*
  * server part
  */
 static int ssendData(char* data, int size);
@@ -14,15 +30,13 @@ static void broadcast(int from, char* data, int size);
 static void *thread_func(void *data_struct);
 static void closeConnection(Client* client);
 
+
 Client* ls;
 int len, cap;
 
-
 void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls) {
-    len = 0; cap = 5;
-    ls = (Client*) malloc(sizeof(Client) * cap);
-    if (ls == NULL)
-        perror("malloc fails");
+    deleteBuffer(buffer);
+    buffer = createBuffer();
 
     // spawning threads for server
     pthread_t temp[numThread];
@@ -33,6 +47,12 @@ void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* thre
             perror("Thread not created");
         }
     }
+
+
+    len = 0; cap = 5;
+    ls = (Client*) malloc(sizeof(Client) * cap);
+    if (ls == NULL)
+        perror("malloc fails");
     
     // waiting for connections and establish a thread to recieve message from each.
     struct sockaddr addr;
@@ -117,6 +137,9 @@ static int csendData(char* data, int size);
 static int sock;
 
 void startClient(int _sock, ThreadProc** threadls, int numThread, pthread_t* threadidls) {
+    deleteBuffer(buffer);
+    buffer = createBuffer();
+    
     sock = _sock;
     // spawning threads for client
     pthread_t temp[numThread];
@@ -141,3 +164,5 @@ void startClient(int _sock, ThreadProc** threadls, int numThread, pthread_t* thr
 static int csendData(char* data, int size) {
     return send(sock, data, size, 0);
 }
+
+

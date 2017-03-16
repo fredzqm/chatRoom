@@ -43,8 +43,6 @@ int main(int argc, char *argv[]) {
     parseArgs(argc, argv, &serv_name, &serv_port);
     int sock = connectSocket(serv_name, serv_port);
 
-    onRecieveBroadcast = _onRecieveBroadcast;
-
     ThreadProc* threads[] = {dataReciever};
     startClient(sock, threads, 1, NULL);
 }

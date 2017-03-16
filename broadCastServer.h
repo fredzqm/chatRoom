@@ -1,20 +1,12 @@
 #ifndef chatRoom_broadCastSever
 #define chatRoom_broadCastSever
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <pthread.h>
-#include <dirent.h>
-#include <errno.h>
-#include <netdb.h>
-#include <arpa/inet.h>
+#include "buffer.h"
 
 #define MAX_STRING_LEN 1024
+
+typedef int SendDataFun(char*, int);
+typedef void* ThreadProc(void*);
 
 typedef struct {
     int index;
@@ -22,11 +14,7 @@ typedef struct {
     int cid;
 } Client;
 
-typedef int SendDataFun(char*, int);
-typedef void* ThreadProc(void*);
-
-void (*onRecieveBroadcast)(char* data, int size);
-
+void getNextPacket(PACKET* packet);
 void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls);
 void startClient(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls);
 
