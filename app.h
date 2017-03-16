@@ -18,15 +18,7 @@
 
 #include "broadCastServer.h"
 
-typedef struct 
-{
-	char name[100];
-	FILE* file;
-} FileInfo;
-
 void *send_func(void *data_struct);
 void *recv_func(void *data_struct);
-
-char name[MAX_STRING_LEN];
 
 #endif

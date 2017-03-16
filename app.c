@@ -1,6 +1,15 @@
 #include <stdlib.h>
 #include "app.h"
 
+typedef struct 
+{
+    char name[100];
+    FILE* file;
+} FileInfo;
+
+
+static char name[MAX_STRING_LEN];
+
 static void requestName(char* buffer) {
     printf("Provide user name: ");
     if (fgets(buffer, MAX_STRING_LEN, stdin) == NULL)
@@ -48,13 +57,13 @@ static int processAndSend(char* buffer, int size, int (*sendData)(char*, int)) {
         strcpy(buffer+2, info.name);
         info.file = fopen(info.name, "r");
         if (sendData(buffer, strlen(info.name) + 2))
-            return -1;
+            return 1;
         // send file data
         while (1) {
-            int numbytes = fread(buffer, 1, MAX_STRING_LEN-2, info.file);
-            if (numbytes <= 0)
-                return -1;
-            sendData(buffer, numbytes+2);
+            int size = fread(buffer, 1, MAX_STRING_LEN-2, info.file);
+            if (size <= 0)
+                return 1;
+            sendData(buffer, size+2);
         }
         // signal the end of file transfer
         buffer[0] = 0;
@@ -62,7 +71,7 @@ static int processAndSend(char* buffer, int size, int (*sendData)(char*, int)) {
         sendData(buffer,2);
     } else {
         if (sendData(buffer, size) < 0)
-            return -1;
+            return 1;
     }
     return 0;
 }
@@ -78,10 +87,10 @@ void *send_func(void *data_struct) {
 
     char buffer[MAX_STRING_LEN];
     while (1) { /* run until user enters "." to quit. */
-        int numbytes = readMessage(buffer, MAX_STRING_LEN);
-        if (numbytes < 0)
+        int size = readMessage(buffer, MAX_STRING_LEN);
+        if (size < 0)
             break;
-        if (processAndSend(buffer, numbytes, sendData) < 0)
+        if (processAndSend(buffer, size, sendData))
             break;
     }
     return NULL;
@@ -89,19 +98,18 @@ void *send_func(void *data_struct) {
 
 
 
-FileInfo info;
-static void onRecieveData(char* data, int size) {
+static void onRecieveData(FileInfo* info, char* data, int size) {
     if (data[0] == 0) {
         if (data[1] == 1) {
-            if (info.name[1] == 0) {
-                strcpy(info.name, data+2);
+            if (info->name[1] == 0) {
+                strcpy(info->name, data+2);
             } else {
-                fwrite(data, 1, size, info.file);
+                fwrite(data, 1, size, info->file);
             }
         } else {
             // end recieving
-            info.name[0] = 0;
-            fclose(info.file);
+            info->name[0] = 0;
+            fclose(info->file);
         }
     } else {
         data[size] = 0;
@@ -111,15 +119,16 @@ static void onRecieveData(char* data, int size) {
 
 void *recv_func(void *data_struct) {
     // SendDataFun* sendData = (SendDataFun*) data_struct;
+    FileInfo info;
     while(1){
         char* data;
-        int numbytes;
-        getNextPacket(&data, &numbytes);
-        if (numbytes < 0) {
-            perror("numbytes negative");
+        int size;
+        getNextPacket(&data, &size);
+        if (size < 0) {
+            perror("size negative");
             break;
         }
-        onRecieveData(data, numbytes);
+        onRecieveData(&info, data, size);
         free(data);
     }
     exit(0);
