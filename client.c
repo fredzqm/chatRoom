@@ -14,8 +14,12 @@
 static void usage();
 static void parseArgs(int argc, char** argv, char** hostName, int* port);
 
-void _onStart(void* data_struct, int (*sendData)(char*, int)) {
+void *dataReciever(void* arg) {
+    SendDataFun* sendData = (SendDataFun*) arg;
+    
+    char name[MAX_STRING_LEN];
     requestName(name);
+
     if (sendData(name, strlen(name)) < 0)
         perror("error sending name");
 
@@ -27,6 +31,7 @@ void _onStart(void* data_struct, int (*sendData)(char*, int)) {
         if (processAndSend(buffer, numbytes, sendData) < 0)
             break;
     }
+    return NULL;
 }
 
 
@@ -39,8 +44,9 @@ int main(int argc, char *argv[]) {
     int sock = connectSocket(serv_name, serv_port);
 
     onRecieveBroadcast = _onRecieveBroadcast;
-    onStart = _onStart;
-    startClient(sock);
+
+    ThreadProc* threads[] = {dataReciever};
+    startClient(sock, threads, 1, NULL);
 }
 
 void parseArgs(int argc, char** argv, char** hostName, int* port) {

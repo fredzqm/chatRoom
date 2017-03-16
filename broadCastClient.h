@@ -20,9 +20,11 @@
 
 #define MAX_STRING_LEN 1024
 
-void startClient(int sock);
-
 void (*onRecieveBroadcast)(char* data, int size);
-void (*onStart)(void* data_struct, int (*sendData)(char*, int));
+
+typedef int SendDataFun(char*, int);
+typedef void* ThreadProc(void*);
+
+void startClient(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls);
 
 #endif

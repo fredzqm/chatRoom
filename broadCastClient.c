@@ -1,19 +1,19 @@
 #include "broadCastClient.h"
 
-static void *dataReciever(void*);
+static int sendData(char* data, int size);
+static int sock;
 
-#define DEFAULTPORT 5555   /* Default port for socket connection */
-#define DEFAULT_SERVE_NAME "localhost"
-#define IP_LENGTH 20 
-
-int sock;
-
-void startClient(int _sock) {
+void startClient(int _sock, ThreadProc** threadls, int numThread, pthread_t* threadidls) {
     sock = _sock;
-
-    pthread_t pid;
-    if (pthread_create(&pid, NULL, dataReciever, NULL))
-        perror("Thread not created");
+    // spawning threads for client
+    pthread_t temp[numThread];
+    if (threadidls == NULL)
+        threadidls = temp;
+    for (int i = 0; i < numThread; i++) {
+        if (pthread_create(&threadidls[i], NULL, threadls[i], sendData)) {
+            perror("Thread not created");
+        }
+    }
 
     char received_string[MAX_STRING_LEN];
     while(1){
@@ -23,17 +23,9 @@ void startClient(int _sock) {
         onRecieveBroadcast(received_string, numbytes);
     }
     close(sock);
-    
-    if (pthread_join(pid, NULL))
-        perror("pthread_join() failed\n");
 }
 
 static int sendData(char* data, int size) {
     return send(sock, data, size, 0);
-}
-
-static void *dataReciever(void* arg) {
-    char name[MAX_STRING_LEN];
-    onStart(name, sendData);
 }
 
