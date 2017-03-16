@@ -2,10 +2,12 @@
 
 Buffer* createBuffer() {
 	Buffer* buf = (Buffer*) malloc(sizeof(Buffer));
-	sem_init(&buf->semphore, 0, 0);
+	buf->packBuf = NULL;
 	buf->start = 0;
 	buf->end = 0;
-	buf->packBuf = NULL;
+	sem_init(&buf->semphore, 0, 0);
+	buf->filled = 0;
+	buf->nextSize = 0;
 	return buf;
 }
 
@@ -13,20 +15,23 @@ void addToBuffer(Buffer* buffer, char* data, int size) {
 	if (size == 0)
 		return;
 	if (buffer->packBuf == NULL) {
-		if (size < 2) {
-			perror("Not enough data for packetSize yet");
-			exit(-1);
+		if (buffer->nextSize != 0) { // get the second half
+			buffer->nextSize = (data[0])       & 0x00ff | buffer->nextSize;   
+			data+= 1; size -= 1;
+		} else if (size == 1) { // only one byte for the first half of size
+			buffer->nextSize = (data[0] << 8)  & 0xff00 ;
+			return;
+		} else {
+			buffer->nextSize = (data[0] << 8)  & 0xff00 | 
+						       (data[1])       & 0x00ff ;
+			data+= 2; size -= 2;
 		}
-		int packSize = (data[0] << 8)  & 0xff00 | 
-					   (data[1])       & 0x00ff ;   
-		buffer->packBuf = (char*) malloc(packSize);
+		buffer->packBuf = (char*) malloc(buffer->nextSize);
 		if (buffer->packBuf == NULL) {
 			perror("malloc fails");
 			exit(-1);
 		}
-		buffer->filled = 0;
-		buffer->nextSize = packSize;
-		addToBuffer(buffer, data+2, size-2);
+		addToBuffer(buffer, data, size);
 	} else  {
 		int needed = buffer->nextSize - buffer->filled;
 		if (needed <= size) {
@@ -43,8 +48,9 @@ void addToBuffer(Buffer* buffer, char* data, int size) {
 			}
 
 			sem_post(&buffer->semphore);
-
 			buffer->packBuf = NULL;
+			buffer->nextSize = 0;
+			buffer->filled = 0;
 			addToBuffer(buffer, data + needed, size - needed);
 		} else {
 			memcpy(buffer->packBuf + buffer->filled, data, size);
