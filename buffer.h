@@ -15,8 +15,6 @@
 #include <arpa/inet.h>
 #include <semaphore.h>
 
-#include "packet.h"
-
 #define PACKET_BUFFER 10
 
 typedef struct
