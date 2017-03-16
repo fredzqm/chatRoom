@@ -12,6 +12,10 @@
 
 static char name[BUFFER_SIZE];
 
+static void clearLine() {
+    printf("\r                                           \r");
+}
+
 static void printPrompt() {
     printf("<%s> : ", name);
     fflush(stdout);
@@ -36,23 +40,33 @@ static int processAndSend(char* buffer, int size, int (*sendData)(char*, int)) {
     } else if (strncmp(buffer, "load ", 5) == 0) {
         int fileNameLen = strlen(buffer+5);
         char fileName[fileNameLen + 1];
-        strcpy(fileName, buffer+6);
+        strcpy(fileName, buffer+5);
         FILE* file = fopen(fileName, "r");
-
+        if (file == NULL) {
+            perror("Fail to open file");
+            exit(3);
+        }
         // send file name
         sent[0] = FILENAME;
         strcpy(sent+1, fileName);
-        if (sendData(sent, fileNameLen + 2))
+        if (sendData(sent, fileNameLen + 2) < 0)
             return 1;
+
+        printf("Sending file \"%s\"", fileName);
         // send file data
         sent[0] = FILEDATA;
         while (1) {
+            printf("."); fflush(stdout);
             int size = fread(sent+1, 1, BUFFER_SIZE-1, file);
-            if (size <= 0)
+            if (size <= 0) {
+                break; // end of file
+            }
+            if (sendData(sent, size+1) < 0)
                 return 1;
-            sendData(sent, size+1);
         }
-        // signal the end of a file
+        printf("\n");
+        fclose(file);
+        // confirm file sent
         sent[0] = FILEEND;
         sendData(sent, 1);
     } else {
@@ -94,27 +108,32 @@ void *send_func(void *data_struct) {
 }
 
 static void onRecieveData(char* data, int size) {
+    clearLine();
     if (data[0] == MESSAGE) {
         data[size] = 0;
-        printf("\r                                           \r");
         printf("%s\n", data+1);
-        printPrompt();
     } else if (data[0] == FILENAME) {
+        // recieve the file name
         char fileName[FILENAME_BUFFER_SIZE];
         strcpy(fileName, data+1);
         FILE* file = fopen(fileName, "w");
-        printf("Recieving file %s ", fileName);
-        fflush(stdout);
+        if (file == NULL) {
+            perror("fail to open write file");
+            exit(3);
+        }
+
+        // recieving file content
+        printf("Recieving file \"%s\" ", fileName);
         while(1){
-            getNextPacket(&data, &size);
             printf(".");
             fflush(stdout);
+            getNextPacket(&data, &size);
             if (size < 0) {
                 perror("size negative");
                 exit(2);
             }
             if (data[0] == FILEEND)
-                break;
+                break; // recieved confirm for file transimitted
             if (data[0] != FILEDATA) {
                 fprintf(stderr, "Wrong file passing prototype: %d\n", data[0]);
                 exit(2);
@@ -122,11 +141,15 @@ static void onRecieveData(char* data, int size) {
             fwrite(data+1, 1, size-1, file);
             free(data);
         }
+
+        // end of file recieving
         printf("\n");
+        fclose(file);
     } else {
         fprintf(stderr, "Unrecognized message type %d\n", data[0]);
         exit(2);
     }
+    printPrompt();
 }
 
 void *recv_func(void *data_struct) {
