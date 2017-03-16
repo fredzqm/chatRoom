@@ -49,7 +49,6 @@ void addToBuffer(Buffer* buffer, char* data, int size) {
 		} else {
 			memcpy(buffer->packBuf + buffer->filled, data, size);
 			buffer->filled += size;
-			buffer->nextSize -= size;
 		}
 	}
 }
