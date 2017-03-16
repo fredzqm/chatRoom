@@ -18,6 +18,8 @@
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 
+
+static void broadcast(int from, char* data, int size);
 static void *thread_func(void *arg);
 static void *server_func(void *arg);
 
@@ -75,31 +77,10 @@ void startServer(int sock) {
     close(sock);
 }
 
-
-int onRecieveDataFrom(Client* thread, char* data, int size) {
-    char sent[MAX_STRING_LEN];
-    int isExit = strcmp("exit", data) == 0;
-    if (isExit) {
-        closeConnection(thread->index);
-    } else {
-        sprintf(sent, "<%s> : %s", (char*) thread->data, data);
-        broadcast(thread->index, sent, strlen(sent));
-    }
-    return isExit;
-}
-
 void closeConnection(int from) {
     Client* client = ls + from;
     close(client->cid);
     client->cid = 0;
-    char message[MAX_STRING_LEN];
-    if (client->index == 0) {
-        sprintf(message, "<%s>(The server) closed the chat...", (char*) client->data);
-    } else {
-        sprintf(message, "<%s> exits the chat...", (char*) client->data);
-        free(client->data);
-    }
-    broadcast(client->index, message, strlen(message));
 }
 
 void broadcast(int from, char* data, int size) {
@@ -133,14 +114,14 @@ static void *thread_func(void *data_struct)
         int numbytes = recv(client->cid, buffer, MAX_STRING_LEN, 0);
         if (numbytes <= 0)
             break;
-        if (onRecieveDataFrom(ls + client->index, buffer, numbytes))
-            break;
+        broadcast(client->index, buffer, numbytes);
     }
     close(client->cid);
 }
 
 static int sendData(char* data, int size) {
-    return onRecieveDataFrom(ls, data, size);
+    broadcast(0, data, size);
+    return size;
 }
 
 static void *server_func(void *data_struct) {

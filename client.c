@@ -15,7 +15,6 @@ static void usage();
 static void parseArgs(int argc, char** argv, char** hostName, int* port);
 
 void _onStart(void* data_struct, int (*sendData)(char*, int)) {
-    // char* name = (char*) data_struct;
     requestName(name);
     if (sendData(name, strlen(name)) < 0)
         perror("error sending name");
@@ -28,7 +27,6 @@ void _onStart(void* data_struct, int (*sendData)(char*, int)) {
         if (processAndSend(buffer, numbytes, sendData) < 0)
             break;
     }
-    perror("bad bad client");
 }
 
 

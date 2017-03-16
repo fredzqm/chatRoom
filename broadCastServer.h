@@ -24,11 +24,6 @@ typedef struct {
 } Client;
 
 
-
-void closeConnection(int from);
-
-void broadcast(int from, char* data, int size);
-
 void startServer(int sock);
 
 
