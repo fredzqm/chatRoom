@@ -13,24 +13,45 @@
 #include <errno.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <semaphore.h>
 
 #include "packet.h"
 
-#define INITIAL_SIZE 5
+#define PACKET_BUFFER 10
+
+typedef struct
+{
+	int size;
+	char* data;
+} PACKET;
 
 typedef struct {
-	PACKET* packets;
-	int size;
-	int index;
+	PACKET packets[PACKET_BUFFER];
+	int start, end;
+	sem_t semphore;
+
+	char* packBuf;
+	int filled;
+	int nextSize;
 } Buffer;
 
-
+/*
+ * create a buffer, when you are finished with it, you should use free()
+ * to release the memory
+ */
 Buffer* createBuffer();
 
-void deleteBuffer(Buffer* buffer);
-
+/*
+ * add a chuck of data to the buffer, they may contain one, multiple or only
+ * part of a packet
+ */
 void addToBuffer(Buffer* buffer, char* data, int size);
 
-void readBuffer(Buffer* buffer, PACKET* packet);
+/*
+ * read a complete packet when it is ready
+ * *data will be assigned with a dynamically allocated memory, so make sure
+ * you free it after you use it 
+ */
+void readBuffer(Buffer* buffer, char** data, int* size);
 
 #endif

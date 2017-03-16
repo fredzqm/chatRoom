@@ -17,8 +17,8 @@ static void onRecieveBroadcast(char* data, int size) {
     addToBuffer(buffer, data, size);
 }
 
-void getNextPacket(PACKET* packet) {
-    readBuffer(buffer, packet);
+void getNextPacket(char** data, int* size) {
+    readBuffer(buffer, data, size);
 }
 
 
@@ -35,7 +35,7 @@ Client* ls;
 int len, cap;
 
 void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls) {
-    deleteBuffer(buffer);
+    free(buffer);
     buffer = createBuffer();
 
     // spawning threads for server
@@ -137,7 +137,7 @@ static int csendData(char* data, int size);
 static int sock;
 
 void startClient(int _sock, ThreadProc** threadls, int numThread, pthread_t* threadidls) {
-    deleteBuffer(buffer);
+    free(buffer);
     buffer = createBuffer();
     
     sock = _sock;

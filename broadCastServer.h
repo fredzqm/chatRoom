@@ -14,7 +14,8 @@ typedef struct {
     int cid;
 } Client;
 
-void getNextPacket(PACKET* packet);
+void getNextPacket(char** data, int* size);
+
 void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls);
 void startClient(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls);
 
