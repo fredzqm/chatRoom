@@ -2,18 +2,19 @@
 
 CC = gcc
 CFLAGS = -g -std=gnu99 -O -Wall -pthread -Wfatal-errors
-DEPS = app.h client.h server.h fileReader.h broadCastServer.h socketFactory.h buffer.h
+DEPS = app.h broadCastServer.h socketFactory.h buffer.h
+ODEPS = app.o broadCastServer.o socketFactory.o buffer.o
 
 all: client server
 
 %.o: %.c ${DEPS}
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-client: client.o app.o fileReader.o broadCastServer.o socketFactory.o buffer.o
-	$(CC) $(CFLAGS) client.o app.o fileReader.o broadCastServer.o socketFactory.o buffer.o -o client 
+client: client.o ${ODEPS}
+	$(CC) client.o $(CFLAGS) ${ODEPS} -o client 
 
-server: server.o app.o fileReader.o broadCastServer.o socketFactory.o buffer.o
-	$(CC) $(CFLAGS) server.o app.o fileReader.o broadCastServer.o socketFactory.o buffer.o -o server
+server: server.o ${ODEPS}
+	$(CC) server.o $(CFLAGS) ${ODEPS} -o server
 
 clean:
 	rm -rf *.o client server *.gch a.out*

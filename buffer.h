@@ -14,7 +14,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
-#include "globals.h"
+#include "packet.h"
 
 #define INITIAL_SIZE 5
 
