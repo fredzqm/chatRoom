@@ -9,8 +9,7 @@
 /*
  * buffer management
  */
-
-Buffer* buffer;
+static Buffer* buffer;
 
 static void onRecieveBroadcast(char* data, int size) {
     addToBuffer(buffer, data, size);
@@ -43,8 +42,8 @@ static void spawnThreads(ThreadProc** threadls, int numThread, pthread_t* thread
 }
 
 
-Client* ls;
-int len, cap;
+static Client* ls;
+static int len, cap;
 
 void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls) {
     free(buffer);
