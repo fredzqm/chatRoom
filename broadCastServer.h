@@ -20,14 +20,12 @@ typedef struct {
     int index;
     pthread_t tid;
     int cid;
-    void* data;
 } Client;
 
 
-void startServer(int sock);
+typedef int SendDataFun(char*, int);
+typedef void* ThreadProc(void*);
 
-
-void (*onRecieveBroadcast)(char* data, int size);
-void (*onStart)(void* data_struct, int (*sendData)(char*, int));
+void startServer(int sock, ThreadProc* server_func);
 
 #endif

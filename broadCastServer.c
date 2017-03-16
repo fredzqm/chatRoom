@@ -20,13 +20,17 @@
 
 
 static void broadcast(int from, char* data, int size);
-static void *thread_func(void *arg);
-static void *server_func(void *arg);
+static void *thread_func(void *data_struct);
 
 Client* ls;
 int len, cap;
 
-void startServer(int sock) {
+static int sendData(char* data, int size) {
+    broadcast(0, data, size);
+    return size;
+}
+
+void startServer(int sock, ThreadProc* server_func) {
     len = 1; cap = 5;
     ls = (Client*) malloc(sizeof(Client) * cap);
     if (ls == NULL)
@@ -37,7 +41,7 @@ void startServer(int sock) {
     ls[0].cid = 0;
 
     /* Spawn thread */
-    if (pthread_create(&ls[0].tid, NULL, server_func, (void *) ls))
+    if (pthread_create(&ls[0].tid, NULL, server_func, (void *) sendData))
         perror("Thread not created");
     
     struct sockaddr addr;
@@ -77,8 +81,7 @@ void startServer(int sock) {
     close(sock);
 }
 
-void closeConnection(int from) {
-    Client* client = ls + from;
+void closeConnection(Client* client) {
     close(client->cid);
     client->cid = 0;
 }
@@ -88,45 +91,24 @@ void broadcast(int from, char* data, int size) {
     for (i = 1; i < len; i++) {
         if (from != i && ls[i].cid != 0) {
             if (send(ls[i].cid, data, size, 0) < 0) {
-                closeConnection(i);
+                closeConnection(ls + i);
             }
         }
     }
     if (from != 0) {
-        onRecieveBroadcast(data, size);
+        // onRecieveBroadcast(data, size);
     }
 }
 
-static void *thread_func(void *data_struct)
-{
+static void *thread_func(void *data_struct) {
     Client* client = (Client*) data_struct;
-
     char buffer[MAX_STRING_LEN];
-    if (recv(client->cid, buffer, MAX_STRING_LEN, 0) < 0)
-        perror("failed to recieve name");
-    client->data = malloc(sizeof(char) * (strlen(buffer) + 1));
-    strcpy((char*)client->data, buffer);
-
-    sprintf(buffer, "<%s> is entering the chat", (char*) client->data);
-    broadcast(client->index, buffer, strlen(buffer));
-
     while(1){
         int numbytes = recv(client->cid, buffer, MAX_STRING_LEN, 0);
         if (numbytes <= 0)
             break;
         broadcast(client->index, buffer, numbytes);
     }
-    close(client->cid);
+    closeConnection(client);
 }
 
-static int sendData(char* data, int size) {
-    broadcast(0, data, size);
-    return size;
-}
-
-static void *server_func(void *data_struct) {
-    Client* client = (Client*) data_struct;
-    char name[MAX_STRING_LEN];
-    client->data = name;
-    onStart(client->data, sendData);
-}
