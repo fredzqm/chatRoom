@@ -29,37 +29,38 @@ static int readMessage(char* buffer, int maxSize) {
 }
 
 static int processAndSend(char* buffer, int size, int (*sendData)(char*, int)) {
-    // printf("%s\n%d\n", buffer, size);
-    if (strcmp(buffer+1, "exit") == 0) {
-        buffer[0] = EXIT;
-        strcpy(buffer+1, name);
-        sendData(buffer, strlen(name) + 2);
+    char sent[BUFFER_SIZE];
+    if (strcmp(buffer, "exit") == 0) {
+        sent[0] = EXIT;
+        strcpy(sent+1, name);
+        sendData(sent, strlen(name) + 2);
         exit(0);
-    } else if (strncmp(buffer+1, "load ", 5) == 0) {
-        int fileNameLen = strlen(buffer+6);
+    } else if (strncmp(buffer, "load ", 5) == 0) {
+        int fileNameLen = strlen(buffer+5);
         char fileName[fileNameLen + 1];
         strcpy(fileName, buffer+6);
         FILE* file = fopen(fileName, "r");
 
         // send file name
-        buffer[0] = FILENAME;
-        strcpy(buffer+1, fileName);
-        if (sendData(buffer, fileNameLen + 2))
+        sent[0] = FILENAME;
+        strcpy(sent+1, fileName);
+        if (sendData(sent, fileNameLen + 2))
             return 1;
         // send file data
-        buffer[0] = FILEDATA;
+        sent[0] = FILEDATA;
         while (1) {
-            int size = fread(buffer+1, 1, BUFFER_SIZE-1, file);
+            int size = fread(sent+1, 1, BUFFER_SIZE-1, file);
             if (size <= 0)
                 return 1;
-            sendData(buffer, size+1);
+            sendData(sent, size+1);
         }
         // signal the end of a file
-        buffer[0] = FILEEND;
-        sendData(buffer, 1);
+        sent[0] = FILEEND;
+        sendData(sent, 1);
     } else {
-        buffer[0] = MESSAGE;
-        if (sendData(buffer, size) < 0)
+        sent[0] = MESSAGE;
+        sprintf(sent+1, "<%s> : %s", name, buffer);
+        if (sendData(sent, strlen(sent+1) + 1) < 0)
             return 1;
     }
     return 0;
@@ -68,21 +69,24 @@ static int processAndSend(char* buffer, int size, int (*sendData)(char*, int)) {
 
 void *send_func(void *data_struct) {
     SendDataFun* sendData = (SendDataFun*) data_struct;
-    
-    char buffer[BUFFER_SIZE];
-    buffer[0] = NAME;
+
     printf("Provide user name: ");
-    if (fgets(buffer+1, BUFFER_SIZE-1, stdin) == NULL) {
+    if (fgets(name, BUFFER_SIZE, stdin) == NULL) {
         perror("Fail to get name");
         exit(3);
     }
+    name[strlen(name) - 1] = 0;
+    
+    char buffer[BUFFER_SIZE];
+    buffer[0] = NAME;
+    strcpy(buffer+1, name);
     if (sendData(buffer, strlen(buffer+1) + 2) < 0) {
         perror("error sending name");
         exit(2);
     }
 
     while (1) { /* run until user enters "." to quit. */
-        int size = readMessage(buffer+1, BUFFER_SIZE-1);
+        int size = readMessage(buffer, BUFFER_SIZE);
         if (size < 0)
             break;
         if (processAndSend(buffer, size, sendData))
