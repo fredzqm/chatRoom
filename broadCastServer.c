@@ -1,25 +1,15 @@
 /**
  * @author zhangq2
  */
-#include <arpa/inet.h>
-#include <dirent.h>
-#include <errno.h>
-#include <netdb.h>
-#include <signal.h>
-#include <sys/socket.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <pthread.h>
-
 #include "broadCastServer.h"
-#include "fileReader.h"
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 #define MYSELF -1
 
-static int sendData(char* data, int size);
+/*
+ * server part
+ */
+static int ssendData(char* data, int size);
 static void broadcast(int from, char* data, int size);
 static void *thread_func(void *data_struct);
 static void closeConnection(Client* client);
@@ -39,7 +29,7 @@ void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* thre
     if (threadidls == NULL)
         threadidls = temp;
     for (int i = 0; i < numThread; i++) {
-        if (pthread_create(&threadidls[i], NULL, threadls[i], sendData)) {
+        if (pthread_create(&threadidls[i], NULL, threadls[i], ssendData)) {
             perror("Thread not created");
         }
     }
@@ -100,7 +90,7 @@ static void closeConnection(Client* client) {
     client->cid = 0;
 }
 
-static int sendData(char* data, int size) {
+static int ssendData(char* data, int size) {
     broadcast(MYSELF, data, size);
     return size;
 }
@@ -115,9 +105,39 @@ static void broadcast(int from, char* data, int size) {
         }
     }
     if (from != MYSELF) {
-        // onRecieveBroadcast(data, size);
+        onRecieveBroadcast(data, size);
     }
 }
 
 
+/*
+ * client part
+ */
+static int csendData(char* data, int size);
+static int sock;
 
+void startClient(int _sock, ThreadProc** threadls, int numThread, pthread_t* threadidls) {
+    sock = _sock;
+    // spawning threads for client
+    pthread_t temp[numThread];
+    if (threadidls == NULL)
+        threadidls = temp;
+    for (int i = 0; i < numThread; i++) {
+        if (pthread_create(&threadidls[i], NULL, threadls[i], csendData)) {
+            perror("Thread not created");
+        }
+    }
+
+    char received_string[MAX_STRING_LEN];
+    while(1){
+        int numbytes = recv(sock, received_string, MAX_STRING_LEN, 0);
+        if (numbytes <= 0)
+            break;
+        onRecieveBroadcast(received_string, numbytes);
+    }
+    close(sock);
+}
+
+static int csendData(char* data, int size) {
+    return send(sock, data, size, 0);
+}

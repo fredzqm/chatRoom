@@ -22,10 +22,12 @@ typedef struct {
     int cid;
 } Client;
 
-
 typedef int SendDataFun(char*, int);
 typedef void* ThreadProc(void*);
 
+void (*onRecieveBroadcast)(char* data, int size);
+
 void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls);
+void startClient(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls);
 
 #endif
