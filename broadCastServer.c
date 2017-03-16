@@ -19,16 +19,14 @@
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 #define MYSELF -1
 
+static int sendData(char* data, int size);
 static void broadcast(int from, char* data, int size);
 static void *thread_func(void *data_struct);
+static void closeConnection(Client* client);
 
 Client* ls;
 int len, cap;
 
-static int sendData(char* data, int size) {
-    broadcast(MYSELF, data, size);
-    return size;
-}
 
 void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls) {
     len = 0; cap = 5;
@@ -36,7 +34,7 @@ void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* thre
     if (ls == NULL)
         perror("malloc fails");
 
-    /* This thread is responsible for handling inputs from the server */
+    // spawning threads for server
     pthread_t temp[numThread];
     if (threadidls == NULL)
         threadidls = temp;
@@ -46,6 +44,7 @@ void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* thre
         }
     }
     
+    // waiting for connections and establish a thread to recieve message from each.
     struct sockaddr addr;
     socklen_t addrlen;    
     while(1) { /* run forever */
@@ -83,12 +82,30 @@ void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* thre
     close(sock);
 }
 
-void closeConnection(Client* client) {
+static void *thread_func(void *data_struct) {
+    Client* client = (Client*) data_struct;
+    char buffer[MAX_STRING_LEN];
+    while(1){
+        int numbytes = recv(client->cid, buffer, MAX_STRING_LEN, 0);
+        if (numbytes <= 0)
+            break;
+        broadcast(client->index, buffer, numbytes);
+    }
+    closeConnection(client);
+    return NULL;
+}
+
+static void closeConnection(Client* client) {
     close(client->cid);
     client->cid = 0;
 }
 
-void broadcast(int from, char* data, int size) {
+static int sendData(char* data, int size) {
+    broadcast(MYSELF, data, size);
+    return size;
+}
+
+static void broadcast(int from, char* data, int size) {
     int i;
     for (i = 0; i < len; i++) {
         if (from != i && ls[i].cid != 0) {
@@ -102,15 +119,5 @@ void broadcast(int from, char* data, int size) {
     }
 }
 
-static void *thread_func(void *data_struct) {
-    Client* client = (Client*) data_struct;
-    char buffer[MAX_STRING_LEN];
-    while(1){
-        int numbytes = recv(client->cid, buffer, MAX_STRING_LEN, 0);
-        if (numbytes <= 0)
-            break;
-        broadcast(client->index, buffer, numbytes);
-    }
-    closeConnection(client);
-}
+
 
