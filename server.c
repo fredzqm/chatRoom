@@ -29,8 +29,11 @@ int main(int argc, char** argv)
     parseArgs(argc, argv, &serv_port);  /* Server port */
     int sock = initializeSocket(serv_port);
 
-    ThreadProc* threads[] = {send_func, recv_func};
-    startServer(sock, threads, 2, NULL);
+    vector<ThreadProc*> threadProcs;
+    threadProcs.push_back(send_func);
+    threadProcs.push_back(recv_func);
+    vector<thread> threads;
+    startServer(sock, threadProcs, threads);
 }
 
 

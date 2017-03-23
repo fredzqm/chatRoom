@@ -22,8 +22,11 @@ int main(int argc, char *argv[]) {
     parseArgs(argc, argv, &serv_name, &serv_port);
     int sock = connectSocket(serv_name, serv_port);
 
-    ThreadProc* threads[] = {send_func, recv_func};
-    startClient(sock, threads, 2, NULL);
+    vector<ThreadProc*> threadProcs;
+    threadProcs.push_back(send_func);
+    threadProcs.push_back(recv_func);
+    vector<thread> threads;
+    startClient(sock, threadProcs, threads);
 }
 
 void parseArgs(int argc, char** argv, char** hostName, int* port) {

@@ -1,7 +1,7 @@
 # Makefile for echo client and echo server
 
-CC = gcc
-CFLAGS = -g -std=gnu99 -O -Wall -pthread -Wfatal-errors -Wno-parentheses
+CC = g++
+CFLAGS = -g -std=c++11 -O -Wall -pthread -Wfatal-errors -Wno-parentheses
 DEPS = app.h broadCastServer.h socketFactory.h buffer.h
 ODEPS = app.o broadCastServer.o socketFactory.o buffer.o
 

@@ -3,7 +3,7 @@
 
 #include "broadCastServer.h"
 
-void *send_func(void *data_struct);
-void *recv_func(void *data_struct);
+void *send_func(SendDataFun *data_struct);
+void *recv_func(SendDataFun *data_struct);
 
 #endif

@@ -2,21 +2,20 @@
 #define chatRoom_broadCastSever
 
 #include "buffer.h"
+#include <thread>
+#include <vector>
+
+using namespace std;
 
 #define MAX_STRING_LEN 1024
 
 typedef int SendDataFun(char*, int);
-typedef void* ThreadProc(void*);
-
-typedef struct {
-    int index;
-    pthread_t tid;
-    int cid;
-} Client;
+typedef void* ThreadProc(SendDataFun*);
 
 void getNextPacket(char** data, int* size);
 
-void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls);
-void startClient(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls);
+
+void startServer(int sock, vector<ThreadProc*>& threadls, vector<thread>& threads);
+void startClient(int sock, vector<ThreadProc*>& threadls, vector<thread>& threads);
 
 #endif

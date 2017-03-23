@@ -79,7 +79,8 @@ static int processAndSend(char* buffer, int size, int (*sendData)(char*, int)) {
 }
 
 
-void *send_func(void *data_struct) {
+
+void *send_func(SendDataFun *data_struct) {
     SendDataFun* sendData = (SendDataFun*) data_struct;
 
     printf("Provide user name: ");
@@ -152,7 +153,7 @@ static void onRecieveData(char* data, int size) {
     printPrompt();
 }
 
-void *recv_func(void *data_struct) {
+void *recv_func(SendDataFun *data_struct) {
     char* data;
     int size;
     while(1){

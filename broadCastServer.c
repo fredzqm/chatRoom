@@ -6,6 +6,8 @@
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 #define MYSELF -1
 
+
+
 /*
  * buffer management
  */
@@ -23,21 +25,22 @@ void getNextPacket(char** data, int* size) {
 /*
  * server part
  */
+typedef struct {
+    int index;
+    pthread_t tid;
+    int cid;
+} Client;
+
+
 static int ssendData(char* data, int size);
 static void broadcast(int from, char* data, int size);
 static void *thread_func(void *data_struct);
 static void closeConnection(Client* client);
 
 
-
-static void spawnThreads(ThreadProc** threadls, int numThread, pthread_t* threadidls, SendDataFun* sendData) {
-    pthread_t temp[numThread];
-    if (threadidls == NULL)
-        threadidls = temp;
-    for (int i = 0; i < numThread; i++) {
-        if (pthread_create(&threadidls[i], NULL, threadls[i], sendData)) {
-            perror("Thread not created");
-        }
+static void spawnThreads(vector<ThreadProc*>& threadls, vector<thread>& threads, SendDataFun* sendData) {
+    for (unsigned int i = 0; i < threadls.size(); i++) {
+        threads.push_back(thread(threadls[i], sendData));
     }
 }
 
@@ -45,12 +48,12 @@ static void spawnThreads(ThreadProc** threadls, int numThread, pthread_t* thread
 static Client* ls;
 static int len, cap;
 
-void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls) {
+void startServer(int sock, vector<ThreadProc*>& threadls, vector<thread>& threads) {
     free(buffer);
     buffer = createBuffer();
 
     // spawning threads for server
-    spawnThreads(threadls, numThread, threadidls, ssendData);
+    spawnThreads(threadls, threads, ssendData);
 
     len = 0; cap = 5;
     ls = (Client*) malloc(sizeof(Client) * cap);
@@ -141,13 +144,13 @@ static void broadcast(int from, char* data, int size) {
 static int csendData(char* data, int size);
 static int sock;
 
-void startClient(int _sock, ThreadProc** threadls, int numThread, pthread_t* threadidls) {
+void startClient(int _sock, vector<ThreadProc*>& threadls, vector<thread>& threads) {
     free(buffer);
     buffer = createBuffer();
     
     sock = _sock;
 
-    spawnThreads(threadls, numThread, threadidls, csendData);
+    spawnThreads(threadls, threads, csendData);
 
     char received_string[MAX_STRING_LEN];
     while(1){
