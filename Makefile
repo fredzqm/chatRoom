@@ -7,7 +7,7 @@ ODEPS = app.o broadCastServer.o socketFactory.o buffer.o
 
 all: client server
 
-%.o: %.c ${DEPS}
+%.o: %.cpp ${DEPS}
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 client: client.o ${ODEPS}
