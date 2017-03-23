@@ -1,69 +1,68 @@
 #include "buffer.h"
 
-Buffer* createBuffer() {
-	Buffer* buf = (Buffer*) malloc(sizeof(Buffer));
-	buf->packBuf = NULL;
-	buf->start = 0;
-	buf->end = 0;
-	sem_init(&buf->semphore, 0, 0);
-	buf->filled = 0;
-	buf->nextSize = 0;
-	return buf;
+
+Buffer::Buffer() {
+	this->packBuf = NULL;
+	this->start = 0;
+	this->end = 0;
+	sem_init(&this->semphore, 0, 0);
+	this->filled = 0;
+	this->nextSize = 0;
 }
 
-void addToBuffer(Buffer* buffer, char* data, int size) {
+void Buffer::addToBuffer(char* data, int size) {
 	if (size == 0)
 		return;
-	if (buffer->packBuf == NULL) {
-		if (buffer->nextSize != 0) { // get the second half
-			buffer->nextSize = (data[0])       & 0x00ff | buffer->nextSize;   
+	if (this->packBuf == NULL) {
+		if (this->nextSize != 0) { // get the second half
+			this->nextSize = (data[0])       & 0x00ff | this->nextSize;   
 			data+= 1; size -= 1;
 		} else if (size == 1) { // only one byte for the first half of size
-			buffer->nextSize = (data[0] << 8)  & 0xff00 ;
+			this->nextSize = (data[0] << 8)  & 0xff00 ;
 			return;
 		} else {
-			buffer->nextSize = (data[0] << 8)  & 0xff00 | 
+			this->nextSize = (data[0] << 8)  & 0xff00 | 
 						       (data[1])       & 0x00ff ;
 			data+= 2; size -= 2;
 		}
-		buffer->packBuf = (char*) malloc(buffer->nextSize);
-		if (buffer->packBuf == NULL) {
+		this->packBuf = (char*) malloc(this->nextSize);
+		if (this->packBuf == NULL) {
 			perror("malloc fails");
 			exit(-1);
 		}
-		addToBuffer(buffer, data, size);
+		addToBuffer(data, size);
 	} else  {
-		int needed = buffer->nextSize - buffer->filled;
+		int needed = this->nextSize - this->filled;
 		if (needed <= size) {
-			memcpy(buffer->packBuf + buffer->filled, data, needed);
-			buffer->packets[buffer->end].size = buffer->nextSize;
-			buffer->packets[buffer->end].data = buffer->packBuf;
+			memcpy(this->packBuf + this->filled, data, needed);
+			this->packets[this->end].size = this->nextSize;
+			this->packets[this->end].data = this->packBuf;
 			
-			buffer->end++;
-			if (buffer->end == PACKET_BUFFER)
-				buffer->end = 0;
-			if (buffer->end == buffer->start) {
+			this->end++;
+			if (this->end == PACKET_BUFFER)
+				this->end = 0;
+			if (this->end == this->start) {
 				perror("Buffer overflow");
 				exit(0);
 			}
 
-			sem_post(&buffer->semphore);
-			buffer->packBuf = NULL;
-			buffer->nextSize = 0;
-			buffer->filled = 0;
-			addToBuffer(buffer, data + needed, size - needed);
+			sem_post(&this->semphore);
+			this->packBuf = NULL;
+			this->nextSize = 0;
+			this->filled = 0;
+			addToBuffer(data + needed, size - needed);
 		} else {
-			memcpy(buffer->packBuf + buffer->filled, data, size);
-			buffer->filled += size;
+			memcpy(this->packBuf + this->filled, data, size);
+			this->filled += size;
 		}
 	}
 }
 
-void readBuffer(Buffer* buffer, char** data, int* size) {
-	sem_wait(&buffer->semphore);
-	*data = buffer->packets[buffer->start].data;
-	*size = buffer->packets[buffer->start].size;
-	buffer->start++;
+void Buffer::readBuffer(char** data, int* size) {
+	sem_wait(&this->semphore);
+	*data = this->packets[this->start].data;
+	*size = this->packets[this->start].size;
+	this->start++;
 }
 
 

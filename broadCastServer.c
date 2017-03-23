@@ -11,14 +11,14 @@
 /*
  * buffer management
  */
-static Buffer* buffer;
+static Buffer buffer;
 
 static void onRecieveBroadcast(char* data, int size) {
-    addToBuffer(buffer, data, size);
+    buffer.addToBuffer(data, size);
 }
 
 void getNextPacket(char** data, int* size) {
-    readBuffer(buffer, data, size);
+    buffer.readBuffer(data, size);
 }
 
 
@@ -49,9 +49,6 @@ static Client* ls;
 static int len, cap;
 
 void startServer(int sock, vector<ThreadProc*>& threadls, vector<thread>& threads) {
-    free(buffer);
-    buffer = createBuffer();
-
     // spawning threads for server
     spawnThreads(threadls, threads, ssendData);
 
@@ -145,9 +142,6 @@ static int csendData(char* data, int size);
 static int sock;
 
 void startClient(int _sock, vector<ThreadProc*>& threadls, vector<thread>& threads) {
-    free(buffer);
-    buffer = createBuffer();
-    
     sock = _sock;
 
     spawnThreads(threadls, threads, csendData);

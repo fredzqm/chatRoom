@@ -23,7 +23,8 @@ typedef struct
 	char* data;
 } PACKET;
 
-typedef struct {
+class Buffer {
+private:
 	PACKET packets[PACKET_BUFFER];
 	int start, end;
 	sem_t semphore;
@@ -31,30 +32,29 @@ typedef struct {
 	char* packBuf;
 	int filled;
 	int nextSize;
-} Buffer;
-
-/*
- * create a buffer, when you are finished with it, you should use free()
- * to release the memory
- */
-Buffer* createBuffer();
-
-/*
- * add a chuck of data to the buffer, they may contain one, multiple or only
- * part of a packet
- */
-void addToBuffer(Buffer* buffer, char* data, int size);
-
-/*
- * read a complete packet when it is ready
- * *data will be assigned with a dynamically allocated memory, so make sure
- * you free it after you use it 
- */
-void readBuffer(Buffer* buffer, char** data, int* size);
+public:
+	/*
+	 * create a buffer, when you are finished with it, you should use free()
+	 * to release the memory
+	 */
+	Buffer();
+	/*
+	 * add a chuck of data to the buffer, they may contain one, multiple or only
+	 * part of a packet
+	 */
+	void addToBuffer(char* data, int size);
+	/*
+	 * read a complete packet when it is ready
+	 * *data will be assigned with a dynamically allocated memory, so make sure
+	 * you free it after you use it 
+	 */
+	void readBuffer(char** data, int* size);
+};
 
 /*
  * serielaize the data and size format into packet format
  */
 int serializeData(char* buffer, char* data, int size);
+
 
 #endif
