@@ -22,7 +22,11 @@
 
 static void parseArgs(int argc, char** argv, int* port);
 static void usage();
-
+static int isCloseRequest(char* request);
+static int isDownloadRequest(char* request);
+static int isUploadRequest(char* request);
+static void handleDownloadRequest(char* request, PacketSocket* psockPtr);
+static void handleUploadRequest(char* request, PacketSocket* psockPtr);
 
 void onConnect(int sock) {
     PacketSocket psocket(sock);
@@ -30,7 +34,22 @@ void onConnect(int sock) {
         char* data;
         int size;
         psocket.getNextPacket(&data, &size);
-        psocket.sendPacket(data, size);
+        // Check request type:
+        // 1. ";;;" = exit
+        // 2. "iWant" = download
+        // 3. "uTake" = upload
+        // 4. Malformed request
+        if (isCloseRequest(data)) {
+            close(sock);
+            delete data;
+            break;
+        } else if (isDownloadRequest(request)) {
+            handleDownloadRequest(request, &psocket);
+        } else if (isUploadRequest(request)) {
+            handleUploadRequest(request, &psocket);
+        } else {
+            psocket.sendPacket("Wrong request format!\n", 22);
+        }
         delete data;
     }
 }
