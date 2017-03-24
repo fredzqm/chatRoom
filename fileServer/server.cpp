@@ -12,15 +12,29 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <vector>
 
-#include "broadCastServer.h"
+#include "packetSocket.h"
 #include "socketFactory.h"
-#include "app.h"
+
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 
 static void parseArgs(int argc, char** argv, int* port);
 static void usage();
+
+
+void onConnect(int sock) {
+    PacketSocket psocket(sock);
+    while (1) {
+        char* data;
+        int size;
+        psocket.getNextPacket(&data, &size);
+        psocket.sendPacket(data, size);
+        delete data;
+    }
+}
+
 
 
 int main(int argc, char** argv)
@@ -29,11 +43,19 @@ int main(int argc, char** argv)
     parseArgs(argc, argv, &serv_port);  /* Server port */
     int sock = initializeSocket(serv_port);
 
-    vector<ThreadProc*> threadProcs;
-    threadProcs.push_back(send_func);
-    threadProcs.push_back(recv_func);
-    vector<thread> threads;
-    startServer(sock, threadProcs, threads);
+    
+    vector<thread> connections;
+    struct sockaddr addr;
+    socklen_t addrlen;    
+    while(1) { /* run forever */
+        /* Create a client socket for an accepted connection */
+        int cid = accept(sock , &addr , &addrlen );
+        if (cid <= 0) {
+            perror("accept error");
+            exit(3);
+        }
+        connections.push_back(thread(onConnect, cid));
+    }
 }
 
 

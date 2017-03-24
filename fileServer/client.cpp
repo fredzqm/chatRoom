@@ -3,8 +3,8 @@
  * @author Fred Zhang
  */
 
+#include "packetSocket.h"
 #include "socketFactory.h"
-#include "app.h"
 
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 #define DEFAULT_SERVE_NAME "localhost"
@@ -12,7 +12,6 @@
 
 static void usage();
 static void parseArgs(int argc, char** argv, char** hostName, int* port);
-
 
 int main(int argc, char *argv[]) {
     int serv_port = DEFAULTPORT;                           /* Server port */
@@ -22,11 +21,19 @@ int main(int argc, char *argv[]) {
     parseArgs(argc, argv, &serv_name, &serv_port);
     int sock = connectSocket(serv_name, serv_port);
 
-    vector<ThreadProc*> threadProcs;
-    threadProcs.push_back(send_func);
-    threadProcs.push_back(recv_func);
-    vector<thread> threads;
-    startClient(sock, threadProcs, threads);
+    PacketSocket psocket(sock);
+    char* data;
+    int size;
+    while (1) {
+        char buffer[1024];
+        fgets(buffer, 1024, stdin);
+        int len = strlen(buffer)-1;
+        buffer[len] = 0;
+        psocket.sendPacket(buffer, len);
+        psocket.getNextPacket(&data, &size);
+        printf("%s\n", data);
+        delete data;
+    }
 }
 
 void parseArgs(int argc, char** argv, char** hostName, int* port) {

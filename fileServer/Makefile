@@ -2,8 +2,8 @@
 
 CC = g++
 CFLAGS = -g -std=c++11 -O -Wall -pthread -Wfatal-errors -Wno-parentheses
-DEPS = app.h broadCastServer.h socketFactory.h buffer.h
-ODEPS = app.o broadCastServer.o socketFactory.o buffer.o
+DEPS = app.h packetSocket.h socketFactory.h buffer.h
+ODEPS = app.o packetSocket.o socketFactory.o buffer.o
 
 all: client server
 
