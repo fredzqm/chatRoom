@@ -6,8 +6,6 @@
 #define DEFAULTPORT 5555   /* Default port for socket connection */
 #define MYSELF -1
 
-
-
 /*
  * buffer management
  */

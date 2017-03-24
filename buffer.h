@@ -17,11 +17,10 @@
 
 #define PACKET_BUFFER 1024
 
-typedef struct
-{
+struct PACKET {
 	int size;
 	char* data;
-} PACKET;
+};
 
 class Buffer {
 private:
