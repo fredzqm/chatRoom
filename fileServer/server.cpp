@@ -20,12 +20,6 @@
 
 static void parseArgs(int argc, char** argv, int* port);
 static void usage();
-static int isCloseRequest(char* request, int size);
-static int isDownloadRequest(char* request, int size);
-static int isUploadRequest(char* request, int size);
-static void handleDownloadRequest(char* request, PacketSocket* psockPtr, int size);
-static void handleUploadRequest(char* request, PacketSocket* psockPtr, int size);
-static void handleEachThread(const std::thread connection);
 
 void onConnect(int sock) {
     PacketSocket psocket(sock);
@@ -99,16 +93,4 @@ void usage() {
     fprintf(stderr, "-u for usage\n");
     fprintf(stderr, "-p for server port\n");
     exit(1);
-}
-
-int isCloseRequest(char* request, int size) {
-    return size == 3 && request[0] == ';' && request[1] == ';' && request[2] == ';';
-}
-
-int isDownloadRequest(char* request, int size) {
-    return size > 6 && request[0] == 'i' && request[1] == 'W' && request[2] == 'a' && request[3] == 'n' && request[4] == 't';
-}
-
-int isUploadRequest(char* request, int size) {
-    return size > 6 && request[0] == 'u' && request[1] == 'T' && request[2] == 'a' && request[3] == 'k' && request[4] == 'e';
 }

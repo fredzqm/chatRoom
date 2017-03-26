@@ -22,11 +22,14 @@ int main(int argc, char *argv[]) {
     int sock = connectSocket(serv_name, serv_port);
 
     PacketSocket psocket(sock);
-    char* data;
-    int size;
+    // char* data;
+    // int size;
     while (1) {
         char buffer[BUFFER_SIZE];
-        fgets(buffer, BUFFER_SIZE, stdin);
+        if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) {
+            perror("reading input failed");
+            exit(3);
+        }
         int len = strlen(buffer)-1;
         buffer[len] = 0;
         if (strcmp(buffer, "exit") == 0) {
@@ -42,8 +45,6 @@ int main(int argc, char *argv[]) {
             psocket.sendPacket(buffer+5, len-5);
             psocket.sendFile(buffer+6);
         }
-         printf("%s\n", data);
-        delete data;
     }
 }
 

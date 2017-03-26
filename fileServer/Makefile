@@ -1,7 +1,7 @@
 # Makefile for echo client and echo server
 
 CC = g++
-CFLAGS = -g -std=c++11 -O -Wall -pthread -Wfatal-errors -Wno-parentheses
+CFLAGS = -g -std=c++11 -O -Wall -pthread -Wfatal-errors -Wno-parentheses -Wno-write-strings
 DEPS = app.h packetSocket.h socketFactory.h buffer.h flags.h
 ODEPS = app.o packetSocket.o socketFactory.o buffer.o
 
