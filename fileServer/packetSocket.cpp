@@ -18,6 +18,7 @@ void PacketSocket::recieve(PacketSocket* psocket) {
 PacketSocket::PacketSocket(int socket) {
 	this->sock = socket;
 	this->recieveThread = new thread(recieve, this);
+    this->recieveThread->detach();
 }
 
 PacketSocket::~PacketSocket() {
