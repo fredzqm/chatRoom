@@ -7,7 +7,7 @@ void PacketSocket::recieve(PacketSocket* psocket) {
         int size = recv(psocket->sock, data, MAX_STRING_LEN, 0);
         if (size <= 0) {
             perror("recv failed");
-            exit(-2);
+            break;
         }
     	psocket->buffer.addToBuffer(data, size);
     }
@@ -15,14 +15,11 @@ void PacketSocket::recieve(PacketSocket* psocket) {
 }
 
 
-PacketSocket::PacketSocket(int socket) {
-	this->sock = socket;
-	this->recieveThread = new thread(recieve, this);
-    this->recieveThread->detach();
+PacketSocket::PacketSocket(int socket): sock(socket), recieveThread(recieve, this) {
 }
 
 PacketSocket::~PacketSocket() {
-    delete this->recieveThread;
+    this->recieveThread.detach();
 }
 
 void PacketSocket::getNextPacket(char** data, int* size) {

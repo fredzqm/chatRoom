@@ -9,7 +9,7 @@ class PacketSocket {
 private:
 	Buffer buffer;
 	int sock;
-	thread* recieveThread;
+	thread recieveThread;
 	static void recieve(PacketSocket* psocket);
 public:
 	PacketSocket(int socket);
