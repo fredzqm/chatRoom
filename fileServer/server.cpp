@@ -16,9 +16,7 @@
 
 #include "packetSocket.h"
 #include "socketFactory.h"
-
-
-#define DEFAULTPORT 5555   /* Default port for socket connection */
+#include "flags.h"
 
 static void parseArgs(int argc, char** argv, int* port);
 static void usage();
@@ -35,24 +33,21 @@ void onConnect(int sock) {
         char* data;
         int size;
         psocket.getNextPacket(&data, &size);
-        // Check request type:
-        // 1. ";;;" = exit
-        // 2. "iWant" = download
-        // 3. "uTake" = upload
-        // 4. Malformed request
-        if (isCloseRequest(data, size)) {
-            printf("Taken");
-            close(sock);
-            delete data;
-            break;
-        } else if (isDownloadRequest(data, size)) {
-            // handleDownloadRequest(data, &psocket, size);
-        } else if (isUploadRequest(data, size)) {
-            // handleUploadRequest(data, &psocket, size);
-        } else {
-            psocket.sendPacket("Wrong request format!\n", 22);
+        switch (data[0]) {
+            case END:
+                delete data;
+                return;
+            case WANT:
+                printf("want: %s\n", data+1);
+                psocket.sendFile(data+1);
+                break;
+            case TAKE:
+                psocket.recieveFile("ServerRecievedFile");
+                break;
+            default:
+                fprintf(stderr, "Wrong request format: %d + %s\n", data[0], data+1);
+                exit(10);
         }
-        delete data;
     }
 }
 

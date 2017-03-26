@@ -1,5 +1,6 @@
 #include "buffer.h"
 
+
 Buffer::Buffer() {
 	this->packBuf = NULL;
 	this->start = 0;

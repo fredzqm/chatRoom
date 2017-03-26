@@ -1,10 +1,14 @@
 #include "packetSocket.h"
-#define MAX_STRING_LEN 1024
+
+#define BUFFER_SIZE 1024
+// #define FILENAME 102
+#define FILEDATA 103
+#define FILEEND 104
 
 void PacketSocket::recieve(PacketSocket* psocket) {
-	char data[MAX_STRING_LEN];
+	char data[BUFFER_SIZE];
     while(1){
-        int size = recv(psocket->sock, data, MAX_STRING_LEN, 0);
+        int size = recv(psocket->sock, data, BUFFER_SIZE, 0);
         if (size <= 0) {
             perror("recv failed");
             break;
@@ -34,4 +38,51 @@ void PacketSocket::sendPacket(char* data, int size) {
     	perror("send failed");
     	exit(-1);
     }
+}
+
+void PacketSocket::sendFile(char* fileName) {
+    FILE* file = fopen(fileName, "r");
+    if (file == NULL) {
+        fprintf(stderr, "filename: %s\t", fileName);
+        perror("Fail to open file");
+        exit(3);
+    }
+    char sent[BUFFER_SIZE];
+    sent[0] = FILEDATA;
+    while (1) {
+        int size = fread(sent+1, 1, BUFFER_SIZE-1, file);
+        if (size <= 0) {
+            break; // end of file
+        }
+        this->sendPacket(sent, size+1);
+    }
+    fclose(file);
+    sent[0] = FILEEND;
+    this->sendPacket(sent, 1);
+}
+
+void PacketSocket::recieveFile(char* fileName) {
+    FILE* file = fopen(fileName, "w");
+    if (file == NULL) {
+        perror("fail to open write file");
+        exit(3);
+    }
+    char* data;
+    int size;
+    while(1){
+        this->getNextPacket(&data, &size);
+        if (size < 0) {
+            perror("size negative");
+            exit(2);
+        }
+        if (data[0] == FILEEND)
+            break; // recieved confirm for file transimitted
+        if (data[0] != FILEDATA) {
+            fprintf(stderr, "Wrong file passing prototype: %d\n", data[0]);
+            exit(2);
+        }
+        fwrite(data+1, 1, size-1, file);
+        free(data);
+    }
+    fclose(file);
 }

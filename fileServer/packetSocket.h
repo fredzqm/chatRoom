@@ -14,6 +14,8 @@ private:
 public:
 	PacketSocket(int socket);
 	void getNextPacket(char** data, int* size);
+	void recieveFile(char* fileName);
+	void sendFile(char* fileName);
 	void sendPacket(char* data, int size);
 	~PacketSocket();
 };

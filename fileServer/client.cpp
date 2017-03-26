@@ -5,16 +5,16 @@
 
 #include "packetSocket.h"
 #include "socketFactory.h"
+#include "flags.h"
 
-#define DEFAULTPORT 5555   /* Default port for socket connection */
-#define DEFAULT_SERVE_NAME "localhost"
-#define IP_LENGTH 20 
+#define BUFFER_SIZE 1024
 
 static void usage();
 static void parseArgs(int argc, char** argv, char** hostName, int* port);
 
+
 int main(int argc, char *argv[]) {
-    int serv_port = DEFAULTPORT;                           /* Server port */
+    int serv_port = DEFAULTPORT;                         /* Server port */
     char* serv_name = DEFAULT_SERVE_NAME;                /* Server host name */
     
     /* Parse command line arguments */
@@ -25,13 +25,24 @@ int main(int argc, char *argv[]) {
     char* data;
     int size;
     while (1) {
-        char buffer[1024];
-        fgets(buffer, 1024, stdin);
+        char buffer[BUFFER_SIZE];
+        fgets(buffer, BUFFER_SIZE, stdin);
         int len = strlen(buffer)-1;
         buffer[len] = 0;
-        psocket.sendPacket(buffer, len);
-        psocket.getNextPacket(&data, &size);
-        printf("%s\n", data);
+        if (strcmp(buffer, "exit") == 0) {
+            buffer[0] = END;
+            psocket.sendPacket(buffer, 1);
+            exit(0);
+        } else if (strncmp(buffer, "iWant ", 6) == 0) {
+            buffer[5] = WANT;
+            psocket.sendPacket(buffer+5, len-5);
+            psocket.recieveFile("recievedFile");
+        } else if (strncmp(buffer, "uTake ", 6) == 0) {
+            buffer[5] = TAKE;
+            psocket.sendPacket(buffer+5, len-5);
+            psocket.sendFile(buffer+6);
+        }
+         printf("%s\n", data);
         delete data;
     }
 }

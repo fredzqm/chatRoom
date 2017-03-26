@@ -2,7 +2,7 @@
 
 CC = g++
 CFLAGS = -g -std=c++11 -O -Wall -pthread -Wfatal-errors -Wno-parentheses
-DEPS = app.h packetSocket.h socketFactory.h buffer.h
+DEPS = app.h packetSocket.h socketFactory.h buffer.h flags.h
 ODEPS = app.o packetSocket.o socketFactory.o buffer.o
 
 all: client server
