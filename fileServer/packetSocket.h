@@ -9,12 +9,12 @@ class PacketSocket {
 private:
 	Buffer buffer;
 	int sock;
-	thread recieveThread;
-	static void recieve(PacketSocket* psocket);
+	thread receiveThread;
+	static void receive(PacketSocket* psocket);
 public:
 	PacketSocket(int socket);
 	void getNextPacket(char** data, int* size);
-	void recieveFile(char* fileName);
+	void receiveFile(char* fileName);
 	void sendFile(char* fileName);
 	void sendPacket(char* data, int size);
 	~PacketSocket();

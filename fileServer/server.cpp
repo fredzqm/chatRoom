@@ -36,7 +36,7 @@ void onConnect(int sock) {
                 psocket.sendFile(data+1);
                 break;
             case TAKE:
-                psocket.recieveFile("ServerRecievedFile");
+                psocket.receiveFile("ServerreceivedFile");
                 break;
             default:
                 fprintf(stderr, "Wrong request format: %d + %s\n", data[0], data+1);

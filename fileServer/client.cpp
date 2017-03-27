@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
         } else if (strncmp(buffer, "iWant ", 6) == 0) {
             buffer[5] = WANT;
             psocket.sendPacket(buffer+5, len-5);
-            psocket.recieveFile("recievedFile");
+            psocket.receiveFile("receivedFile");
         } else if (strncmp(buffer, "uTake ", 6) == 0) {
             buffer[5] = TAKE;
             psocket.sendPacket(buffer+5, len-5);

@@ -5,7 +5,7 @@
 #define FILEDATA 103
 #define FILEEND 104
 
-void PacketSocket::recieve(PacketSocket* psocket) {
+void PacketSocket::receive(PacketSocket* psocket) {
 	char data[BUFFER_SIZE];
     while(1){
         int size = recv(psocket->sock, data, BUFFER_SIZE, 0);
@@ -19,11 +19,11 @@ void PacketSocket::recieve(PacketSocket* psocket) {
 }
 
 
-PacketSocket::PacketSocket(int socket): sock(socket), recieveThread(recieve, this) {
+PacketSocket::PacketSocket(int socket): sock(socket), receiveThread(receive, this) {
 }
 
 PacketSocket::~PacketSocket() {
-    this->recieveThread.detach();
+    this->receiveThread.detach();
 }
 
 void PacketSocket::getNextPacket(char** data, int* size) {
@@ -61,7 +61,7 @@ void PacketSocket::sendFile(char* fileName) {
     this->sendPacket(sent, 1);
 }
 
-void PacketSocket::recieveFile(char* fileName) {
+void PacketSocket::receiveFile(char* fileName) {
     FILE* file = fopen(fileName, "w");
     if (file == NULL) {
         perror("fail to open write file");
@@ -76,7 +76,7 @@ void PacketSocket::recieveFile(char* fileName) {
             exit(2);
         }
         if (data[0] == FILEEND)
-            break; // recieved confirm for file transimitted
+            break; // received confirm for file transimitted
         if (data[0] != FILEDATA) {
             fprintf(stderr, "Wrong file passing prototype: %d\n", data[0]);
             exit(2);
