@@ -13,9 +13,9 @@ private:
 	static void receive(PacketSocket* psocket);
 public:
 	PacketSocket(int socket);
-	void getNextPacket(char** data, int* size);
-	void receiveFile(char* fileName);
-	void sendFile(char* fileName);
-	void sendPacket(char* data, int size);
+	int getNextPacket(char** data, int* size);
+	int receiveFile(char* fileName);
+	int sendFile(char* fileName);
+	int sendPacket(char* data, int size);
 	~PacketSocket();
 };

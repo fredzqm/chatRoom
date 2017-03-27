@@ -27,18 +27,19 @@ void onConnect(int sock) {
         char* data;
         int size;
         psocket.getNextPacket(&data, &size);
+        char actualFilePath[BUFFER_SIZE];
         switch (data[0]) {
             case END:
                 delete data;
                 return;
-            case WANT:
+            case WANT :
+                strcpy(actualFilePath, "./serverstore/");
                 printf("want: %s\n", data+1);
-                char actualFilePath[BUFFER_SIZE] = "./serverstore/";
                 strncat(actualFilePath, data+1, size-1);
                 psocket.sendFile(actualFilePath);
                 break;
-            case TAKE:
-                char actualFilePath[BUFFER_SIZE] = "./serverreceived/";
+            case TAKE :
+                strcpy(actualFilePath, "./serverreceived/");
                 strncat(actualFilePath, data+1, size-1);
                 psocket.receiveFile(actualFilePath);
                 break;

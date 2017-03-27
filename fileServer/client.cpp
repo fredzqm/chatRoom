@@ -7,8 +7,6 @@
 #include "socketFactory.h"
 #include "flags.h"
 
-#define BUFFER_SIZE 1024
-
 static void usage();
 static void parseArgs(int argc, char** argv, char** hostName, int* port);
 
@@ -47,7 +45,7 @@ int main(int argc, char *argv[]) {
             buffer[5] = TAKE;
             psocket.sendPacket(buffer+5, len-5);
             char actualFilePath[BUFFER_SIZE] = "./clientstore/";
-            strcat("./clientstore/", buffer+6)
+            strcat("./clientstore/", buffer+6);
             psocket.sendFile(actualFilePath);
         } else {
             psocket.sendPacket(buffer, len);
