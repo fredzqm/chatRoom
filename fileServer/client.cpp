@@ -40,11 +40,15 @@ int main(int argc, char *argv[]) {
         } else if (strncmp(buffer, "iWant ", 6) == 0) {
             buffer[5] = WANT;
             psocket.sendPacket(buffer+5, len-5);
-            psocket.receiveFile("receivedFile");
+            char actualFilePath[BUFFER_SIZE] = "./clientreceived/";
+            strcat(actualFilePath, buffer);
+            psocket.receiveFile(actualFilePath);
         } else if (strncmp(buffer, "uTake ", 6) == 0) {
             buffer[5] = TAKE;
             psocket.sendPacket(buffer+5, len-5);
-            psocket.sendFile(buffer+6);
+            char actualFilePath[BUFFER_SIZE] = "./clientstore/";
+            strcat("./clientstore/", buffer+6)
+            psocket.sendFile(actualFilePath);
         } else {
             psocket.sendPacket(buffer, len);
         }

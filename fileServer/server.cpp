@@ -33,10 +33,14 @@ void onConnect(int sock) {
                 return;
             case WANT:
                 printf("want: %s\n", data+1);
-                psocket.sendFile(data+1);
+                char actualFilePath[BUFFER_SIZE] = "./serverstore/";
+                strncat(actualFilePath, data+1, size-1);
+                psocket.sendFile(actualFilePath);
                 break;
             case TAKE:
-                psocket.receiveFile("ServerreceivedFile");
+                char actualFilePath[BUFFER_SIZE] = "./serverreceived/";
+                strncat(actualFilePath, data+1, size-1);
+                psocket.receiveFile(actualFilePath);
                 break;
             default:
                 fprintf(stderr, "Wrong request format: %d + %s\n", data[0], data+1);
