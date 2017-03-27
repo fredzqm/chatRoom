@@ -26,6 +26,7 @@ int main(int argc, char *argv[]) {
     // int size;
     while (1) {
         char buffer[BUFFER_SIZE];
+        printf(">> ");
         if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) {
             perror("reading input failed");
             exit(3);
@@ -44,6 +45,8 @@ int main(int argc, char *argv[]) {
             buffer[5] = TAKE;
             psocket.sendPacket(buffer+5, len-5);
             psocket.sendFile(buffer+6);
+        } else {
+            psocket.sendPacket(buffer, len);
         }
     }
 }
