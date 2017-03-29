@@ -6,6 +6,8 @@
 #define END 1
 #define WANT 2
 #define TAKE 3
+#define ERROR 4
+#define DATA 5
 
 
 #endif

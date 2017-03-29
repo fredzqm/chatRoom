@@ -42,13 +42,30 @@ int main(int argc, char *argv[]) {
             psocket.sendPacket(buffer+5, len-5);
             char actualFilePath[BUFFER_SIZE] = "./clientreceived/";
             strcat(actualFilePath, buffer);
-            psocket.receiveFile(actualFilePath);
+            char* data;
+            int size;
+            psocket.getNextPacket(&data, &size);
+            if (data[0] == ERROR) {
+                printf("Server reports an error: %s\n", data[1]);
+                exit(1);
+            } else {
+                psocket.receiveFile(actualFilePath);
+            }
         } else if (strncmp(buffer, "uTake ", 6) == 0) {
             buffer[5] = TAKE;
             psocket.sendPacket(buffer+5, len-5);
             char actualFilePath[BUFFER_SIZE] = "./clientstore/";
-            strcat("./clientstore/", buffer+6)
-            psocket.sendFile(actualFilePath);
+            strcat("./clientstore/", buffer+6);
+            FILE* file = fopen(actualFilePath, "r");
+            if (file == NULL) {
+                perror("File doesn't exist");
+                buffer[0] = END;
+                psocket.sendPacket(buffer, 1);
+                exit(1);
+            } else {
+                psocket.sendFile(actualFilePath);
+            }
+            fclose(file);
         } else {
             psocket.sendPacket(buffer, len);
         }

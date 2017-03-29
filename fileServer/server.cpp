@@ -18,6 +18,8 @@
 #include "socketFactory.h"
 #include "flags.h"
 
+#define BUFFER_SIZE 1024
+
 static void parseArgs(int argc, char** argv, int* port);
 static void usage();
 
@@ -35,7 +37,20 @@ void onConnect(int sock) {
                 printf("want: %s\n", data+1);
                 char actualFilePath[BUFFER_SIZE] = "./serverstore/";
                 strncat(actualFilePath, data+1, size-1);
-                psocket.sendFile(actualFilePath);
+                FILE* file = fopen(actualFilePath, "r");
+                char* message;
+                if (file == NULL) {
+                    perror("File doesn't exist");
+                    message = " Requested file doens't exist";
+                    message[0] = ERROR;
+                    psocket.sendPacket(message, strlen(message));
+                } else {
+                    message = " Sending file";
+                    message[0] = DATA;
+                    psocket.sendPacket(message, strlen(message));
+                    psocket.sendFile(actualFilePath);
+                }
+                fclose(file);
                 break;
             case TAKE:
                 char actualFilePath[BUFFER_SIZE] = "./serverreceived/";
@@ -44,6 +59,9 @@ void onConnect(int sock) {
                 break;
             default:
                 fprintf(stderr, "Wrong request format: %d + %s\n", data[0], data+1);
+                char* buffer = " Wrong request format";
+                buffer[0] = ERROR;
+                psocket.sendPacket(buffer, strlen(buffer));
                 exit(10);
         }
     }
