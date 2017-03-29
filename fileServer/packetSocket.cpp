@@ -26,26 +26,26 @@ PacketSocket::~PacketSocket() {
     this->receiveThread.detach();
 }
 
-void PacketSocket::getNextPacket(char** data, int* size) {
+int PacketSocket::getNextPacket(char** data, int* size) {
 	this->buffer.readBuffer(data, size);
+    return 0;
 }
 
 
-void PacketSocket::sendPacket(char* data, int size) {
+int PacketSocket::sendPacket(char* data, int size) {
 	char buf[size+2];
     size = serializeData(buf, data, size);
     if (send(this->sock, buf, size, 0) < 0) {
     	perror("send failed");
-    	exit(-1);
+        return 1;
     }
+    return 0;
 }
 
-void PacketSocket::sendFile(char* fileName) {
+int PacketSocket::sendFile(char* fileName) {
     FILE* file = fopen(fileName, "r");
     if (file == NULL) {
-        fprintf(stderr, "filename: %s\t", fileName);
-        perror("Fail to open file");
-        exit(3);
+        return 2;
     }
     char sent[BUFFER_SIZE];
     sent[0] = FILEDATA;
@@ -54,35 +54,42 @@ void PacketSocket::sendFile(char* fileName) {
         if (size <= 0) {
             break; // end of file
         }
-        this->sendPacket(sent, size+1);
+        int c;
+        if ((c = this->sendPacket(sent, size+1)) != 0) {
+            return c;
+        }
     }
     fclose(file);
     sent[0] = FILEEND;
     this->sendPacket(sent, 1);
+    return 0;
 }
 
-void PacketSocket::receiveFile(char* fileName) {
+int PacketSocket::receiveFile(char* fileName) {
     FILE* file = fopen(fileName, "w");
     if (file == NULL) {
-        perror("fail to open write file");
-        exit(3);
+        return 2;
     }
     char* data;
     int size;
     while(1){
-        this->getNextPacket(&data, &size);
+        int c;
+        if ((c = this->getNextPacket(&data, &size)) != 0) {
+            return c;
+        }
         if (size < 0) {
             perror("size negative");
-            exit(2);
+            return 3;
         }
         if (data[0] == FILEEND)
             break; // received confirm for file transimitted
         if (data[0] != FILEDATA) {
             fprintf(stderr, "Wrong file passing prototype: %d\n", data[0]);
-            exit(2);
+            return 4;
         }
         fwrite(data+1, 1, size-1, file);
         free(data);
     }
     fclose(file);
+    return 0;
 }

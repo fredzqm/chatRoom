@@ -7,8 +7,6 @@
 #include "socketFactory.h"
 #include "flags.h"
 
-#define BUFFER_SIZE 1024
-
 static void usage();
 static void parseArgs(int argc, char** argv, char** hostName, int* port);
 
