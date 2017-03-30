@@ -53,20 +53,18 @@ int main(int argc, char *argv[]) {
                 psocket.receiveFile(buffer);
             }
         } else if (strncmp(buffer, "uTake ", 6) == 0) {
-            buffer[5] = TAKE;
-            psocket.sendPacket(buffer+5, len-5);
-            char actualFilePath[BUFFER_SIZE] = "./clientstore/";
-            strcat("./clientstore/", buffer+6);
-            FILE* file = fopen(actualFilePath, "r");
+            FILE* file = fopen(buffer+6, "r");
             if (file == NULL) {
-                perror("File doesn't exist");
-                buffer[0] = END;
-                psocket.sendPacket(buffer, 1);
-                exit(1);
+                cout << "file " << string(buffer+6) << " does not exists" << endl;
             } else {
-                psocket.sendFile(actualFilePath);
+                fclose(file);
+                char take[BUFFER_SIZE];
+                take[0] = TAKE;
+                cout << "Where do you want to put this? " << flush;
+                getLine(take+1);
+                psocket.sendPacket(take, 2+strlen(take+1));
+                psocket.sendFile(buffer+6);
             }
-            fclose(file);
         } else {
             cout << "Unknow command" << endl;
             // psocket.sendPacket(buffer, len);

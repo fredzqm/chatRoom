@@ -29,15 +29,12 @@ void onConnect(int sock) {
         char* data;
         int size;
         psocket.getNextPacket(&data, &size);
-        char actualFilePath[BUFFER_SIZE];
         switch (data[0]) {
             case END: {
                 delete data;
                 return;
             }
             case WANT : {
-                // strcpy(actualFilePath, "./serverstore/");
-                // strncat(actualFilePath, data+1, size-1);
                 printf("want: %s\n", data+1);
                 FILE* file = fopen(data+1, "r");
                 char code;
@@ -52,9 +49,7 @@ void onConnect(int sock) {
                 fclose(file);
             } break;
             case TAKE : {
-                strcpy(actualFilePath, "./serverreceived/");
-                strncat(actualFilePath, data+1, size-1);
-                psocket.receiveFile(actualFilePath);
+                psocket.receiveFile(data+1);
             } break;
             default:
                 fprintf(stderr, "Wrong request format: %d + %s\n", data[0], data+1);
