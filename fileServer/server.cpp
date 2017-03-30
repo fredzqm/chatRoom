@@ -31,33 +31,31 @@ void onConnect(int sock) {
         psocket.getNextPacket(&data, &size);
         char actualFilePath[BUFFER_SIZE];
         switch (data[0]) {
-            case END:
+            case END: {
                 delete data;
                 return;
-            case WANT :
-                strcpy(actualFilePath, "./serverstore/");
+            }
+            case WANT : {
+                // strcpy(actualFilePath, "./serverstore/");
+                // strncat(actualFilePath, data+1, size-1);
                 printf("want: %s\n", data+1);
-                strncat(actualFilePath, data+1, size-1);
-                FILE* file = fopen(actualFilePath, "r");
-                char* message;
+                FILE* file = fopen(data+1, "r");
+                char code;
                 if (file == NULL) {
-                    perror("File doesn't exist");
-                    message = " Requested file doens't exist";
-                    message[0] = ERROR;
-                    psocket.sendPacket(message, strlen(message));
+                    code = ERROR;
+                    psocket.sendPacket(&code, 1);
                 } else {
-                    message = " Sending file";
-                    message[0] = DATA;
-                    psocket.sendPacket(message, strlen(message));
-                    psocket.sendFile(actualFilePath);
+                    code = DATA;
+                    psocket.sendPacket(&code, 1);
+                    psocket.sendFile(data+1);
                 }
                 fclose(file);
-                break;
-            case TAKE :
+            } break;
+            case TAKE : {
                 strcpy(actualFilePath, "./serverreceived/");
                 strncat(actualFilePath, data+1, size-1);
                 psocket.receiveFile(actualFilePath);
-                break;
+            } break;
             default:
                 fprintf(stderr, "Wrong request format: %d + %s\n", data[0], data+1);
                 char* buffer = " Wrong request format";

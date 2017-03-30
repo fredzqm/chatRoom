@@ -6,10 +6,21 @@
 #include "packetSocket.h"
 #include "socketFactory.h"
 #include "flags.h"
+#include <iostream>
 
 static void usage();
 static void parseArgs(int argc, char** argv, char** hostName, int* port);
 
+
+int getLine(char* buffer) {
+    if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) {
+        perror("reading input failed");
+        exit(3);
+    }
+    int len = strlen(buffer)-1;
+    buffer[len] = 0;
+    return len;
+}
 
 int main(int argc, char *argv[]) {
     int serv_port = DEFAULTPORT;                         /* Server port */
@@ -20,17 +31,10 @@ int main(int argc, char *argv[]) {
     int sock = connectSocket(serv_name, serv_port);
 
     PacketSocket psocket(sock);
-    // char* data;
-    // int size;
     while (1) {
         char buffer[BUFFER_SIZE];
-        printf(">> ");
-        if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) {
-            perror("reading input failed");
-            exit(3);
-        }
-        int len = strlen(buffer)-1;
-        buffer[len] = 0;
+        cout << ">> " << flush;
+        int len = getLine(buffer);
         if (strcmp(buffer, "exit") == 0) {
             buffer[0] = END;
             psocket.sendPacket(buffer, 1);
@@ -38,16 +42,15 @@ int main(int argc, char *argv[]) {
         } else if (strncmp(buffer, "iWant ", 6) == 0) {
             buffer[5] = WANT;
             psocket.sendPacket(buffer+5, len-5);
-            char actualFilePath[BUFFER_SIZE] = "./clientreceived/";
-            strcat(actualFilePath, buffer);
             char* data;
             int size;
             psocket.getNextPacket(&data, &size);
             if (data[0] == ERROR) {
-                printf("Server reports an error: %s\n", data[1]);
-                exit(1);
+                cout << "The file is not found." << endl;
             } else {
-                psocket.receiveFile(actualFilePath);
+                cout << "Where do you want to save this? " << flush;
+                getLine(buffer);
+                psocket.receiveFile(buffer);
             }
         } else if (strncmp(buffer, "uTake ", 6) == 0) {
             buffer[5] = TAKE;
@@ -65,7 +68,8 @@ int main(int argc, char *argv[]) {
             }
             fclose(file);
         } else {
-            psocket.sendPacket(buffer, len);
+            cout << "Unknow command" << endl;
+            // psocket.sendPacket(buffer, len);
         }
     }
 }
