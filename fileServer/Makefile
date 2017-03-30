@@ -1,4 +1,5 @@
-# Makefile for echo client and echo server
+# Makefile 
+# Fred Zhang(zhangq2) Zhou Zhou(zhouz2)
 
 CC = g++
 CFLAGS = -g -std=c++11 -O -Wall -pthread -Wfatal-errors -Wno-parentheses -Wno-write-strings

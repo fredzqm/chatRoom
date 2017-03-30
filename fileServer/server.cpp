@@ -58,6 +58,7 @@ void onConnect(int sock) {
                 psocket.sendPacket(buffer, strlen(buffer));
                 exit(10);
         }
+        delete data;
     }
 }
 
@@ -68,7 +69,6 @@ int main(int argc, char** argv)
     int sock = initializeSocket(serv_port);
 
     
-    vector<thread> connections;
     struct sockaddr addr;
     socklen_t addrlen;    
     while(1) { /* run forever */
@@ -78,7 +78,8 @@ int main(int argc, char** argv)
             perror("accept error");
             exit(3);
         }
-        connections.push_back(thread(onConnect, cid));
+        thread t(onConnect, cid);
+        t.detach();
     }
 }
 

@@ -52,6 +52,7 @@ int main(int argc, char *argv[]) {
                 getLine(buffer);
                 psocket.receiveFile(buffer);
             }
+            delete data;
         } else if (strncmp(buffer, "uTake ", 6) == 0) {
             FILE* file = fopen(buffer+6, "r");
             if (file == NULL) {
