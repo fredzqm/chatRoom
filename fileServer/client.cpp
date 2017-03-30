@@ -1,6 +1,6 @@
 /**
  * Lab09 Solution File - simple client for echo server
- * @author Fred Zhang
+ * @author Fred Zhang, Zhou Zhou
  */
 
 #include "packetSocket.h"
