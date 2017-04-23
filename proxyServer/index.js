@@ -2,30 +2,27 @@ const http = require('http');
 const request = require("request");
 const fs = require('fs');
 
-let num = 1;
-
 http.createServer((req, res) => {
   console.log(req.url + " " + req.method);
   console.log("\trequest headers: %j", req.headers);
-  let con = request({
+  let a = req.url.split('\/');
+  const request = http.request({
+    protocol: 'http:',
     method: req.method,
-    url: req.url,
+    hostname: a[2],
+    path: '\/'+a.slice(3).join('\/'),
     headers: req.headers
-  },(error, response, body) => {
-    if (error) {
-      console.log("\tError with " + req.url + ":\n\t" + error);
-      res.statusCode = 404;
-      res.end("Error");
-    } else {
-      console.log("\tresponse headers: %j", response.headers);
-      // console.log(body);
-      // res.writeHead(response.statusCode, response.headers);
-      // res.end(body);
-    }
+  }, (response) => {
+    res.writeHeader(response.statusCode, response.headers);
+    response.on('data', (chunk)=>{
+      res.write(chunk);
+    });
+    response.on('end', ()=>{
+      res.end();
+    });
   });
-  req.pipe(con);
-  con.pipe(res);
-  const name = "xx" + num;
-  con.pipe(fs.createWriteStream(name));
-  num++;
+  request.on('error', (e) => {
+    console.log("\t Error %j", e);
+  });
+  request.end();
 }).listen(1337);
