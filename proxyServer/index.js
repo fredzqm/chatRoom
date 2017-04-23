@@ -13,6 +13,7 @@ http.createServer((req, res) => {
     res.end(store.body);
   } else {
     console.log("\trequest headers: %j", req.headers);
+    let a = req.url.split('\/');
     const store = {};
     let body = [];
     const request = http.request({
