@@ -80,9 +80,7 @@ static int processAndSend(char* buffer, int size, int (*sendData)(char*, int)) {
 
 
 
-void *send_func(SendDataFun *data_struct) {
-    SendDataFun* sendData = (SendDataFun*) data_struct;
-
+void *send_func(SendDataFun *sendData) {
     printf("Provide user name: ");
     if (fgets(name, BUFFER_SIZE, stdin) == NULL) {
         perror("Fail to get name");
@@ -153,7 +151,7 @@ static void onRecieveData(char* data, int size) {
     printPrompt();
 }
 
-void *recv_func(SendDataFun *data_struct) {
+void *recv_func(SendDataFun *sendData) {
     char* data;
     int size;
     while(1){

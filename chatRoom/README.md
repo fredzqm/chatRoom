@@ -22,7 +22,7 @@ There are three types of commands you can type in a chat:
 
 1. exit         
         to exit the chat room
-2. loat \<fileName\>   
+2. load \<fileName\>   
         To transfer some file. This file will be transfered to everyone else
         and saved at the same relative location.
 3. Any other unrecognized commands are treated as regular messages
@@ -37,16 +37,20 @@ It specifies the specifics of prompt format. It defines the protocol
 used to send data.
 It defines two methods:
     
-    void *send_func(void *data_struct);
-    void *recv_func(void *data_struct);
+    void *send_func(SendDataFun *data_struct);
+    void *recv_func(SendDataFun *data_struct);
     
-These two methods define how the application, and used by the client
-and server driver.
+These two methods define two threads that handles message sending and recieving.
+They are used by the client and server driver.
+
+send_func monitors the stdin, prints out prompt, parses user inputs, and sends corresponding message out.
+
+recv_func monitors the socket connection, and parses and hanldes every incomming message.
 
 #### broadCastServer.c
 
 It provides two methods for launching a general chat room app, given a connected
-socket and list of threadProcedures. defines as `` typedef void* ThreadProc(void*);``
+socket and list of threadProcedures. defines as `` typedef void* ThreadProc(void*);`` You can provide as many threadProcedures as possible.
     
     void startServer(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls);
     void startClient(int sock, ThreadProc** threadls, int numThread, pthread_t* threadidls);
@@ -63,8 +67,7 @@ To retrieve a data call `void getNextPacket(char** data, int* size);`
 
 Here is one simple example that just echo what every recieved back.
     
-    void *echo_threadProc(void *data_struct) {
-        SendDataFun* sendData = (SendDataFun*) data_struct;
+    void *echo_threadProc(SendDataFun *sendData) {
         char* data;
         int size;
         while(1){
